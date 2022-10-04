@@ -1,5 +1,5 @@
 import { useContext, useEffect } from 'react'
-import { ProfileContext } from '../utils/context/Pofile'
+import { ProfileContext } from '../utils/context/Profile'
 import styled from 'styled-components'
 import { useState } from 'react'
 import PostForm from '../components/PostForm'
@@ -9,6 +9,9 @@ import { size } from '../utils/breakpoint'
 import colors from '../utils/colors'
 import { SizeDashboardContext } from '../utils/context/SetSizeDashboard'
 import { Loader } from '../utils/styles/Loader'
+import { authContext } from '../utils/context/Auth'
+import fetchApi from '../utils/hooks/fetchApi'
+import { useRef } from 'react'
 
 const DivStyle = styled.div`
   display: flex;
@@ -27,13 +30,12 @@ const CardWrapper = styled.div`
     width: 2px;
   }
   &::-webkit-scrollbar-track {
-    background: ${colors.thirth}; 
+    background: ${colors.thirth};
   }
   &::-webkit-scrollbar-thumb {
     border-radius: 20px;
     border: 3px solid ${colors.secondary};
   }
-
   @media ${size.mobileM} {
     width: 50%;
     max-width: 780px;
@@ -45,58 +47,57 @@ function Dashboard() {
   const { profile, setProfile } = useContext(ProfileContext)
   const [reload, setReload] = useState(false)
   const [datas, setData] = useState([])
-  const {sizeDashbord} = useContext(SizeDashboardContext)
+  const { sizeDashbord } = useContext(SizeDashboardContext)
   const [isLoading, setIsLoading] = useState(false)
+  const { logout } = useContext(authContext)
+  const oneOnce = useRef(false)
 
   useEffect(() => {
+    if (oneOnce.current) return
+    else oneOnce.current = true
     setIsLoading(true)
-    function fetchPost() {
-      fetch('http://localhost:4000/api/post/', {
-        headers: {
-          Authorization: `Bearer ${profile.token}`,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.error && data.error.name === 'TokenExpiredError') {
-            console.log('yess Papa')
-            setProfile({ token: 'TokenExpiredError' })
-          } else
-          setData(data.reverse())
-          setReload(false)
-          setIsLoading(false)
-          console.log(data)
-        })
+    const option = {
+      method: 'GET',
     }
-    fetchPost()
-  }, [profile.token, setProfile, reload])
-
+    fetchApi('http://localhost:2000/api/post/', option, profile.token).then(
+      (res) => {
+        if (res.error && res.error.name === 'TokenExpiredError') {
+          console.log('yess Papa')
+          setProfile({ token: 'TokenExpiredError' })
+        } else setReload(false)
+        setIsLoading(false)
+        setData(res.data.reverse())
+      }
+    )
+  }, [reload, setProfile, profile.token])
 
   return (
     <DivStyle>
-      {profile.token === 'TokenExpiredError' && <Navigate to={'/'} />}
+      {(profile.token === 'TokenExpiredError' || profile.token === '') &&
+        logout() && <Navigate to={'/'} />}
       {isLoading && <Loader />}
-      <CardWrapper style={{height: sizeDashbord}}>
-        {/* {console.log(datas)} */}
-        {datas.map((data) => ( 
-          <CardPost
-            key={data._id}
-            cardId={data._id}
-            text={data.text}
-            author={data.author}
-            date={data.date}
-            avatar={data.avatarAuthor}
-            picture={data.imageUrl}
-            userId={data.userId}
-            likes={data.likes}
-            dislikes={data.dislikes}
-            usersDisliked={data.usersDisliked}
-            usersLiked={data.usersLiked}
-            setReload={setReload}
-          />
-        ))}
+      <CardWrapper style={{ height: sizeDashbord }}>
+        {datas &&
+          datas.map((post) => (
+            <CardPost
+              key={post._id}
+              cardId={post._id}
+              text={post.text}
+              author={post.author}
+              date={post.date}
+              avatar={post.avatarAuthor}
+              picture={post.imageUrl}
+              userId={post.userId}
+              likes={post.likes}
+              dislikes={post.dislikes}
+              usersDisliked={post.usersDisliked}
+              usersLiked={post.usersLiked}
+              setReload={setReload}
+              oneOnce={oneOnce}
+            />
+          ))}
       </CardWrapper>
-      <PostForm setReload={setReload} />
+      <PostForm setReload={setReload} oneOnce={oneOnce} />
     </DivStyle>
   )
 }

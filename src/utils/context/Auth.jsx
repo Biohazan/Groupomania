@@ -1,30 +1,28 @@
 import { createContext, useState } from 'react'
 import { useContext } from 'react'
-import { ProfileContext } from './Pofile'
-import { defaultProfile } from '../../utils/context/Pofile'
-
+import { ProfileContext } from './Profile'
+import { defaultProfile } from './Profile'
 
 export const authContext = createContext()
 
 export function AuthProvider({ children }) {
   let isAuthedStorage = JSON.parse(localStorage.getItem('isAuthed'))
-  const [isAuthed, setisAuthed] = useState(isAuthedStorage)
+  const [isAuthed, setIsAuthed] = useState(isAuthedStorage)
   const { setProfile } = useContext(ProfileContext)
 
   function login() {
-    setisAuthed(true)
-    localStorage.setItem('isAuthed', JSON.stringify(isAuthed))
+    setIsAuthed(true)
+    localStorage.setItem('isAuthed', true)
   }
   function logout() {
-    setisAuthed(false)
+    setIsAuthed(false)
     localStorage.setItem('isAuthed', false)
     setProfile('')
     localStorage.setItem('profile', JSON.stringify(defaultProfile))
-
   }
 
   return (
-    <authContext.Provider value={{ isAuthed, login, logout }}>
+    <authContext.Provider value={{ isAuthed, login, logout, setIsAuthed }}>
       {children}
     </authContext.Provider>
   )

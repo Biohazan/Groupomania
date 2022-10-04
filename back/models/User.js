@@ -8,6 +8,6 @@ const userSchema = mongoose.Schema({
     pictureUrl: {type: String}
 })
 
-userSchema.plugin(uniqueValidator)
+userSchema.plugin(uniqueValidator, {message: "Cet email est déja pris !"})
 
 module.exports = mongoose.model('User', userSchema)

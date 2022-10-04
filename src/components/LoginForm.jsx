@@ -1,12 +1,14 @@
-import {  useContext, useState } from 'react'
+import { useContext, useState } from 'react'
 import styled from 'styled-components'
 import colors from '../utils/colors'
 import { StyledHomeButton } from '../utils/styles/button'
 import { size } from '../utils/breakpoint'
 import { Navigate } from 'react-router-dom'
-import { useFetch } from '../utils/hooks/useFetch'
 import { useViewPass } from '../utils/hooks/useViewPass'
+import { ProfileContext } from '../utils/context/Profile'
 import { authContext } from '../utils/context/Auth'
+import fetchApi from '../utils/hooks/fetchApi'
+import defaultPicture from '../assets/profile.png'
 
 const MailWrapper = styled.div`
   margin: 5px;
@@ -87,19 +89,39 @@ const ButtonSignUp = {
 function LoginForm({ setSelectedSignUp }) {
   const [inputMailValue, setMailValue] = useState('')
   const [inputPassValue, setPassValue] = useState('')
-  const {colorView, passType, viewPass} = useViewPass()
-  const { isAuthed } = useContext(authContext)
+  const { colorView, passType, viewPass } = useViewPass()
+  const [fetchIsCorect, setFetchIsCorect] = useState(false)
+  const { setProfile } = useContext(ProfileContext)
+  const [fetchError, setFetchError] = useState([])
+  const { login, isAuthed } = useContext(authContext)
 
-  const [url, setUrl] = useState('')
-  let formToSend = {
-    email: inputMailValue,
-    password: inputPassValue,
+  async function sendLogin(e) {
+    e.preventDefault()
+    const option = {
+      method: 'POST',
+      data: {
+        email: inputMailValue,
+        password: inputPassValue,
+      },
+    }
+    fetchApi(`http://localhost:2000/api/auth/login`, option).then((res) => {
+      if (res.status === 200) {
+        login()
+        setProfile({
+          pseudo: res.data.pseudo,
+          token: res.data.token,
+          picture: res.data.pictureUrl || defaultPicture,
+          userId: res.data.userId,
+        })
+        // localStorage.setItem('isAuthed', true)
+        setFetchIsCorect(true)
+      } else console.log(res)
+    })
   }
-  const { fetchError } = useFetch(url, formToSend)
 
   return (
-    <FormWrapper onSubmit={(e) => e.preventDefault()}>
-      {fetchError !== [] && fetchError.map((error) => <span>{error}</span>)}
+    <FormWrapper onSubmit={(e) => sendLogin(e)}>
+      {/* {fetchError && console.log(fetchError)} */}
       <MailWrapper>
         <label htmlFor="mail">Email: </label>
         <input
@@ -132,7 +154,6 @@ function LoginForm({ setSelectedSignUp }) {
           type="submit"
           id="enter"
           style={ButtonEnter}
-          onClick={() => setUrl(`http://localhost:4000/api/auth/login`)}
         >
           Entrer !
         </StyledHomeButton>
@@ -143,7 +164,7 @@ function LoginForm({ setSelectedSignUp }) {
           S'enregister
         </StyledHomeButton>
       </ButtonWrapper>
-      {isAuthed === true && <Navigate to={"/dashboard"} replace/>}
+      {isAuthed === true && <Navigate to={'/dashboard'} />}
     </FormWrapper>
   )
 }

@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useContext, useRef } from 'react'
 import styled from 'styled-components'
 import colors from '../utils/colors'
-import { ProfileContext } from '../utils/context/Pofile'
+import { ProfileContext } from '../utils/context/Profile'
 import { Navigate } from 'react-router-dom'
 import Likes from './Likes'
+import Comments from './Comment'
+import fetchApi from '../utils/hooks/fetchApi'
 
 const CardWrapper = styled.div`
   border: 1px solid ${colors.thirth};
@@ -29,7 +31,6 @@ const CardTitle = styled.div`
   align-self: flex-start;
   padding: 10px;
   width: 97%;
-  color: white;
   text-shadow: 1px 1px ${colors.thirth};
   border-bottom: 1px dotted ${colors.thirth};
   & .userCard {
@@ -63,16 +64,15 @@ const CardText = styled.div`
   text-align: center;
   width: 100%;
   padding: 15px 0px;
-  color: white;
   border-bottom: dotted 1px ${colors.thirth};
 `
 const DeletedPost = styled.div`
   padding: 15px;
   text-align: center;
-  color: white;
 `
 
 const CommsWrapper = styled.div`
+width: 100%;
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -91,25 +91,24 @@ function CardPost({
   usersDisliked,
   usersLiked,
   setReload,
+  oneOnce
 }) {
   const { profile } = useContext(ProfileContext)
   const elementRef = useRef(null)
   const [isModify, setIsModify] = useState(false)
   const [isDelete, setIsDelete] = useState(false)
-
+  const [inputComments, setInputComments] = useState(false)
+  
   const pictureStyle = {
     paddingBottom: !text && '5px',
   }
 
   function delCard() {
-    fetch(`http://localhost:4000/api/post/${cardId}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${profile.token}`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
+    const option = {
+      method: 'DELETE'
+    }
+    fetchApi(`http://localhost:2000/api/post/${cardId}`, option, profile.token)
+      .then((res) => {
         setIsDelete(true)
       })
   }
@@ -140,24 +139,26 @@ function CardPost({
         />
       )}
       {text && <CardText>{text}</CardText>}
-      <div className='test' style={{width: "100%"}}>
+      <div style={{width: "100%"}}>
         <Likes
           likes={likes}
           dislikes={dislikes}
           cardId={cardId}
           setReload={setReload}
+          oneOnce={oneOnce}
           usersDisliked={usersDisliked}
           usersLiked={usersLiked}
+          setInputComments={setInputComments}
         />
-      </div>
-      <CommsWrapper>
-
+      </div>  
+      <CommsWrapper >
+        <Comments inputComments={inputComments} setInputComments={setInputComments} postId={cardId}/>
       </CommsWrapper>
     </CardWrapper>
   ) : (
     setTimeout(() => {
       setReload(true)
-    }, 3000) && <DeletedPost> Post Supprimer </DeletedPost>
+    }, 2000) && <DeletedPost> Post Supprimer </DeletedPost>
   )
 }
 

@@ -1,4 +1,4 @@
-import { ProfileContext } from '../utils/context/Pofile'
+import { ProfileContext } from '../utils/context/Profile'
 import { useContext, useState } from 'react'
 import styled from 'styled-components'
 import colors from '../utils/colors'
@@ -6,10 +6,13 @@ import { size } from '../utils/breakpoint'
 import Picker from 'emoji-picker-react'
 import { useEffect, useRef } from 'react'
 import { SizeDashboardContext } from '../utils/context/SetSizeDashboard'
+import TextareaAutosize from 'react-textarea-autosize'
+import fetchApi from '../utils/hooks/fetchApi'
 
-const FormWrapper = styled.div`
+const FormWrapper = styled.form`
   position: fixed;
   bottom: 0;
+  width: 90%;
   @media ${size.mobileM} {
     width: 50%;
   }
@@ -123,7 +126,7 @@ const PicturePreview = styled.div`
   }
 `
 
-function PostForm({ setReload }) {
+function PostForm({ setReload, oneOnce }) {
   const { profile } = useContext(ProfileContext)
   // Date Manage
   let d = new Date()
@@ -155,8 +158,7 @@ function PostForm({ setReload }) {
   }
   //Function for added Picture
   let reader = new FileReader()
-
-  const changeHandler = (event) => {
+  const changePicture = (event) => {
     setSelectedFile(event.target.files[0])
     setIsFilePicked(true)
     let picture = event.target.files[0]
@@ -169,34 +171,31 @@ function PostForm({ setReload }) {
   }
 
   // Function to fetch with API
-  async function AddPost() {
+  function addPost(e) {
+    e.preventDefault()
     const formData = new FormData()
     formData.append('post', JSON.stringify(formToSend))
     isFilePicked && formData.append('image', selectedFile)
     if (formToSend.text === '' && !isFilePicked) return
-    try {
-      const response = await fetch(`http://localhost:4000/api/post`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${profile.token}`,
-        },
-        body: formData,
-      })
-      const res = await response.json()
-      if (!res.error) {
-        console.log(res)
-        setFetchIsCorect(true)
-        setPostValue('')
-        setReload(true)
-        setIsFilePicked(false)
-      } else {
-        setFetchError(res.error)
-        console.log('merde')
-      }
-    } catch (error) {
-      console.log(error)
+    const option = {
+      method: 'POST',
+      data: formData,
     }
+    fetchApi(`http://localhost:2000/api/post`, option, profile.token)
+    .then((data) => {
+        if (data.status === 201) {
+          oneOnce.current = false
+          console.log(data)
+          setFetchIsCorect(true)
+          setPostValue('')
+          setReload(true)
+          setIsFilePicked(false)
+        }
+        else setFetchError(data)
+      }
+    )
   }
+
   const { setFormHeight } = useContext(SizeDashboardContext)
   const elementRef = useRef(null)
 
@@ -205,7 +204,7 @@ function PostForm({ setReload }) {
   }, [setFormHeight])
 
   return (
-    <FormWrapper ref={elementRef}>
+    <FormWrapper ref={elementRef} onSubmit={(e) => addPost(e)}>
       {fetchError && fetchError.map((error) => <div>{error}</div>)}
       {isEmoji && (
         <PickerDiv>
@@ -233,7 +232,7 @@ function PostForm({ setReload }) {
               type="file"
               accept="image/*"
               id="fileUpload"
-              onChange={changeHandler}
+              onChange={changePicture}
             />
           </IconWrapper>
         </TextAreaTitle>
@@ -247,18 +246,19 @@ function PostForm({ setReload }) {
           </PicturePreview>
         )}
         <TextAreaInputSend>
-          <textarea
+          <TextareaAutosize
             name="postInput"
             id="postInput"
+            aria-label='Ecrire un post'
             cols={window.innerWidth >= 530 ? '160' : '40'}
             rows="2"
             value={inputPostValue}
             onChange={(e) => setPostValue(e.target.value)}
-          ></textarea>
+          ></TextareaAutosize>
           <button
             className="fa-regular fa-paper-plane"
             id="ButtonSendPost"
-            onClick={AddPost}
+            aria-label='envoyer le post'
           />
         </TextAreaInputSend>
       </DashInput>

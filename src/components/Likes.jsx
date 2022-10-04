@@ -1,8 +1,9 @@
 import styled from 'styled-components'
 import { useEffect, useState } from 'react'
-import { ProfileContext } from '../utils/context/Pofile'
+import { ProfileContext } from '../utils/context/Profile'
 import colors from '../utils/colors'
 import { useContext } from 'react'
+import fetchApi from '../utils/hooks/fetchApi'
 
 const LikeContainer = styled.div`
   display: flex;
@@ -37,15 +38,18 @@ function Likes({
   likes,
   dislikes,
   cardId,
-  setReload,
   usersDisliked,
   usersLiked,
+  setInputComments,
+  oneOnce,
+  setReload
 }) {
   const { profile } = useContext(ProfileContext)
   const [liked, setLiked] = useState(false)
   const [disliked, setDisliked] = useState(false)
 
   useEffect(() => {
+    if (!usersDisliked || !usersLiked) return
     if (usersDisliked.find((user) => user === profile.userId)) {
       setDisliked(true)
     } else if (usersLiked.find((user) => user === profile.userId)) {
@@ -54,59 +58,55 @@ function Likes({
       setDisliked(false)
       setLiked(false)
     }
-  }, [profile.userId, usersDisliked, usersLiked, liked, disliked, setReload])
+  }, [profile.userId, usersDisliked, usersLiked, liked, disliked])
 
-  async function sendLikes(isLike) {
-    let postLike = { like: isLike }
-    try {
-      const fetchLike = await fetch(
-        `http://localhost:4000/api/post/${cardId}/like`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${profile.token}`,
-          },
-          body: JSON.stringify(postLike),
-        }
-      )
-      const res = await fetchLike.json()
-      if (res.error) console.log(res)
-      else setReload(true)
-    } catch (error) {
-      console.log(error)
+ function sendLikes(isLike) {
+    const option = {
+      method: 'POST',
+      data: { like: isLike }
     }
-  }
-
+    fetchApi(
+        `http://localhost:2000/api/post/${cardId}/like`, option, profile.token )
+        .then((res) => {
+          console.log(res)
+          if (res.status === 200) 
+          {setReload(true)
+          oneOnce.current = false}
+          else 
+          console.log(res)
+        })
+    } 
+    
   return (
     <LikeContainer>
       <LikeWrapper>
         {liked ? (
-          <i className="fa-solid fa-thumbs-up" onClick={() => sendLikes(0)}>
+          <i className="fa-solid fa-thumbs-up hoverDiv" onClick={() => sendLikes(0)}>
             {likes}
           </i>
         ) : (
-          <i className="fa-regular fa-thumbs-up" onClick={() => sendLikes(1)}>
+          <i className="fa-regular fa-thumbs-up hoverDiv" onClick={() => sendLikes(1)}>
             {likes}
           </i>
         )}
         {disliked ? (
-          <i className="fa-solid fa-thumbs-down" onClick={() => sendLikes(0)}>
+          <i className="fa-solid fa-thumbs-down hoverDiv" onClick={() => sendLikes(0)}>
             {dislikes}
           </i>
         ) : (
           <i
-            className="fa-regular fa-thumbs-down"
+            className="fa-regular fa-thumbs-down hoverDiv"
             onClick={() => sendLikes(-1)}
           >
             {dislikes}
           </i>
         )}
       </LikeWrapper>
-      <CommsButtonWrapper>
+      <CommsButtonWrapper className='hoverDiv' onClick={() => setInputComments(true)}>
         <i className="fa-regular fa-comments" />
         Commenter.....
       </CommsButtonWrapper>
+      
     </LikeContainer>
   )
 }

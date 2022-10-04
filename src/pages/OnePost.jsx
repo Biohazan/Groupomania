@@ -1,10 +1,13 @@
 import { useEffect, useState, useContext } from 'react'
-import { ProfileContext } from '../utils/context/Pofile'
-import { useParams, Navigate, useNavigate } from 'react-router-dom'
+import { ProfileContext } from '../utils/context/Profile'
+import { useParams, Navigate } from 'react-router-dom'
 import styled from 'styled-components'
 import colors from '../utils/colors'
 import { size } from '../utils/breakpoint'
 import Picker from 'emoji-picker-react'
+import Comments from '../components/Comment'
+import Likes from '../components/Likes'
+import TextareaAutosize from 'react-textarea-autosize'
 
 const CardContainer = styled.div`
   display: flex;
@@ -21,6 +24,7 @@ const CardWrapper = styled.div`
   align-items: center;
   background-image: linear-gradient(126deg, #4f9df9, #ffd7d7);
   max-width: 800px;
+  width: 90%;
 `
 const CardTitle = styled.div`
   display: flex;
@@ -134,6 +138,7 @@ const CardInput = styled.div`
     resize: none;
     overflow: auto;
     outline: none;
+    width: 90%;
     @media ${size.mobileM} {
       margin-right: 0px;
       padding: 15px;
@@ -177,6 +182,7 @@ function OnePost() {
   const [fetchIsCorect, setFetchIsCorect] = useState(false)
   const [fetchError, setFetchError] = useState([])
   const [isNotSameUser, setNotSameUser] = useState(false)
+  const [inputComments, setInputComments] = useState(false)
 
   // Date Manage
   let d = new Date()
@@ -186,7 +192,7 @@ function OnePost() {
 
   useEffect(() => {
     function fetchPost() {
-      fetch(`http://localhost:4000/api/post/${postId}`, {
+      fetch(`http://localhost:2000/api/post/${postId}`, {
         headers: {
           Authorization: `Bearer ${profile.token}`,
         },
@@ -194,7 +200,6 @@ function OnePost() {
         .then((response) => response.json())
         .then((data) => {
           if (data.error && data.error.name === 'TokenExpiredError') {
-            console.log('yess Papa')
             setProfile({ token: 'TokenExpiredError' })
           } else {
             if (data.userId !== profile.userId) {
@@ -232,7 +237,7 @@ function OnePost() {
 
   //Function for added Picture
   let reader = new FileReader()
-  const changeHandler = (event) => {
+  const changePicture = (event) => {
     setSelectedFile(event.target.files[0])
     setIsFilePicked(true)
     let picture = event.target.files[0]
@@ -251,7 +256,7 @@ function OnePost() {
     avatarAuthor: profile.picture,
   }
 
-  // Function to post modification with API
+  // Function for post modification
   async function modifyPost() {
     console.log(inputPostValue)
     const formData = new FormData()
@@ -339,20 +344,17 @@ function OnePost() {
                 type="file"
                 accept="image/*"
                 id="fileUpload"
-                onChange={changeHandler}
+                onChange={changePicture}
               />
             </IconWrapper>
           </TextAreaTitle>
-
           <CardInput>
-            <textarea
+            <TextareaAutosize
               name="postInput"
               id="postInput"
-              cols={window.innerWidth >= 530 ? '160' : '40'}
-              rows="2"
               value={inputPostValue}
               onChange={(e) => setPostValue(e.target.value)}
-            ></textarea>
+            />
             <button
               className="fa-regular fa-paper-plane"
               id="ButtonSendPost"
@@ -360,6 +362,22 @@ function OnePost() {
             />
           </CardInput>
         </CardInputWrapper>
+        {
+          <div style={{ width: '100%', padding:'5px' }}>
+            <Likes
+              likes={datas.likes}
+              dislikes={datas.dislikes}
+              cardId={datas._id}
+              setReload={setReload}
+              usersDisliked={datas.usersDisliked}
+              usersLiked={datas.usersLiked}
+              setInputComments={setInputComments}
+            />
+         <div style={{ margin:'5px' }}>
+        <Comments inputComments={inputComments} setInputComments={setInputComments} postId={postId} />
+        </div>
+        </div>
+        }
       </CardWrapper>
     </CardContainer>
   )

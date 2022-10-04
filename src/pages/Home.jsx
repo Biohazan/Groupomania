@@ -6,10 +6,10 @@ import { size } from '../utils/breakpoint'
 import { useState, useContext } from 'react'
 import LoginForm from '../components/LoginForm'
 import SignUpForm from '../components/SignUpForm'
-import { ProfileContext } from '../utils/context/Pofile'
+import { ProfileContext } from '../utils/context/Profile'
 import { authContext } from '../utils/context/Auth'
 import { Navigate } from 'react-router-dom'
-import { defaultProfile } from '../utils/context/Pofile'
+import { defaultProfile } from '../utils/context/Profile'
 
 const HomeWrapper = styled.div`
   display: flex;
@@ -72,17 +72,19 @@ function App() {
   const [isTokenExpired, setTokenExpired] = useState(false)
   const { profile } = useContext(ProfileContext)
   const { logout, isAuthed } = useContext(authContext)
-
-  localStorage.setItem('profile', JSON.stringify(defaultProfile))
-
-  profile.token === 'TokenExpiredError' &&
+ 
+  if (!profile) {
+    localStorage.setItem('profile', JSON.stringify(defaultProfile))
+  }
+  if (profile.token === 'TokenExpiredError' ) {
     logout() &&
     setSelectedLogin(true) &&
     setTokenExpired(true)
-
+  }
+    
   return (
     <HomeWrapper>
-      {isAuthed && <Navigate to="/dashboard" />}
+      {isAuthed && <Navigate to="/dashboard"/>}
       {isSelectedSignUp === false ? (
         <HomeCard>
           <HomeCardTitle>

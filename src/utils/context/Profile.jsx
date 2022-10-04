@@ -15,8 +15,6 @@ export const ProfilePovider = ({ children }) => {
  const [ expiredToken, setExpiredToken ] = useState(false)
   let getProfile = JSON.parse(localStorage.getItem('profile'))
   const [profile, setProfile] = useState(getProfile)
-
-  
   localStorage.setItem('profile', JSON.stringify(profile))
 
   return (

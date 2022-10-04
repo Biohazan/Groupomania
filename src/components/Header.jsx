@@ -1,6 +1,6 @@
 import logoWhite from '../assets/logo-white.svg'
 import styled from 'styled-components'
-import { ProfileContext } from '../utils/context/Pofile'
+import { ProfileContext } from '../utils/context/Profile'
 import { useContext, useRef, useEffect } from 'react'
 import { authContext } from '../utils/context/Auth'
 import { Link } from 'react-router-dom'
@@ -91,11 +91,11 @@ function Header() {
       </LogoWrapper>
       {isAuthed === true && (
         <ProfileWrapper>
-          <ProfileLink to={"/"}>
+          <ProfileLink to={`/profile`}>
           <img src={profile.picture } alt="test"/>
-          {window.innerWidth >= 530 ? <div>{profile.pseudo}</div> : null}
+          {window.innerWidth >= 530 ? <div className='hoverDiv'>{profile.pseudo}</div> : null}
           </ProfileLink>
-          <LogOutButton onClick={() => logout()} className="fa-solid fa-power-off" />
+          <LogOutButton onClick={() => logout()} className="fa-solid fa-power-off hoverDiv" />
         </ProfileWrapper>
        )}
     </HeaderWrapper>
