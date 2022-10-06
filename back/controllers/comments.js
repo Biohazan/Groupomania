@@ -7,7 +7,7 @@ exports.createComments = (req, res, next) => {
   const postComments = {
     ...commentsObject,
     userId: req.auth.userId,
-    imageUrl: req.file
+    pictureUrl: req.file
       ? `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
       : null,
     likes: 0,
@@ -44,7 +44,7 @@ exports.modifyComments = (req, res, next) => {
   const commentsObject = req.file
     ? {
         ...JSON.parse(req.body.comments),
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${
+        pictureUrl: `${req.protocol}://${req.get('host')}/images/${
           req.file.filename
         }`,
       }
@@ -56,7 +56,7 @@ exports.modifyComments = (req, res, next) => {
         res.status(401).json({ message: 'Non autorisé' })
       } else {
         if (req.file) {
-          const filename = comments.imageUrl.split('/images')[1]
+          const filename = comments.pictureUrl.split('/images')[1]
           fs.unlink(`images/${filename}`, () => {
             console.log('Image supprimé')
           })
@@ -84,8 +84,8 @@ exports.deleteComments = (req, res, next) => {
       } 
       else if (req.body.delete !== 'deleteComms') {res.status(401).json({ message: 'Non autorisé2' })}
       else {
-        if (comment.imageUrl) {
-          const filename = comment.imageUrl.split('/images')[1]
+        if (comment.pictureUrl) {
+          const filename = comment.pictureUrl.split('/images')[1]
           fs.unlink(`images/${filename}`, () => {
             console.log('Image supprimé')
           })

@@ -133,8 +133,9 @@ function SignUpForm({ setSelectedSignUp, setSelectedLogin }) {
         setProfile({
           pseudo: res.data.pseudo,
           token: res.data.token,
-          picture: res.data.pictureUrl || defaultPicture,
+          avatar: res.data.avatar,
           userId: res.data.userId,
+          describe: res.data.describe
         })
         // setFetchIsCorect(true)
       } else if (res.response.data.error.name === 'ValidationError') {

@@ -31,10 +31,6 @@ const DashInput = styled.div`
     padding: 5px;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
-    border: none;
-    resize: none;
-    overflow: auto;
-    outline: none;
     @media ${size.mobileM} {
       padding: 15px;
       border-top-right-radius: 0px;
@@ -136,7 +132,6 @@ function PostForm({ setReload, oneOnce }) {
   // Form Const
   const [inputPostValue, setPostValue] = useState('')
   const [fetchIsCorect, setFetchIsCorect] = useState(false)
-  const [fetchError, setFetchError] = useState([])
   // Const for Emojy
   const [isEmoji, setIsEmoji] = useState(false)
   const onEmojiClick = (event, emojiObject) => {
@@ -154,7 +149,7 @@ function PostForm({ setReload, oneOnce }) {
     author: profile.pseudo,
     date: fullDate,
     text: inputPostValue,
-    avatarAuthor: profile.picture,
+    avatar: profile.avatar,
   }
   //Function for added Picture
   let reader = new FileReader()
@@ -181,8 +176,9 @@ function PostForm({ setReload, oneOnce }) {
       method: 'POST',
       data: formData,
     }
-    fetchApi(`http://localhost:2000/api/post`, option, profile.token)
-    .then((data) => {
+    
+    fetchApi(`http://localhost:2000/api/post`, option, profile.token).then(
+      (data) => {
         if (data.status === 201) {
           oneOnce.current = false
           console.log(data)
@@ -190,8 +186,8 @@ function PostForm({ setReload, oneOnce }) {
           setPostValue('')
           setReload(true)
           setIsFilePicked(false)
-        }
-        else setFetchError(data)
+        } else console.log(data.response.data.error)
+
       }
     )
   }
@@ -205,7 +201,6 @@ function PostForm({ setReload, oneOnce }) {
 
   return (
     <FormWrapper ref={elementRef} onSubmit={(e) => addPost(e)}>
-      {fetchError && fetchError.map((error) => <div>{error}</div>)}
       {isEmoji && (
         <PickerDiv>
           <Picker onEmojiClick={onEmojiClick} disableSearchBar={true} />
@@ -247,9 +242,10 @@ function PostForm({ setReload, oneOnce }) {
         )}
         <TextAreaInputSend>
           <TextareaAutosize
+            className="textAreaStyle"
             name="postInput"
             id="postInput"
-            aria-label='Ecrire un post'
+            aria-label="Ecrire un post"
             cols={window.innerWidth >= 530 ? '160' : '40'}
             rows="2"
             value={inputPostValue}
@@ -258,7 +254,7 @@ function PostForm({ setReload, oneOnce }) {
           <button
             className="fa-regular fa-paper-plane"
             id="ButtonSendPost"
-            aria-label='envoyer le post'
+            aria-label="envoyer le post"
           />
         </TextAreaInputSend>
       </DashInput>

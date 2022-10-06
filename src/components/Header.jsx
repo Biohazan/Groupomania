@@ -37,7 +37,6 @@ const LogoStyled = styled(Link)`
 `
 const ProfileWrapper = styled.div`
   display: flex;
-  width: 30%;
   border-top-left-radius: 15px;
   border-bottom-left-radius: 15px;
   color: white;
@@ -91,8 +90,8 @@ function Header() {
       </LogoWrapper>
       {isAuthed === true && (
         <ProfileWrapper>
-          <ProfileLink to={`/profile`}>
-          <img src={profile.picture } alt="test"/>
+          <ProfileLink to={`/profile/${profile.userId}`}>
+          <img src={profile.avatar } alt="test"/>
           {window.innerWidth >= 530 ? <div className='hoverDiv'>{profile.pseudo}</div> : null}
           </ProfileLink>
           <LogOutButton onClick={() => logout()} className="fa-solid fa-power-off hoverDiv" />

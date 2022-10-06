@@ -8,6 +8,7 @@ import Picker from 'emoji-picker-react'
 import Comments from '../components/Comment'
 import Likes from '../components/Likes'
 import TextareaAutosize from 'react-textarea-autosize'
+import fetchApi from '../utils/hooks/fetchApi'
 
 const CardContainer = styled.div`
   display: flex;
@@ -15,10 +16,10 @@ const CardContainer = styled.div`
 `
 const CardWrapper = styled.div`
   margin: 5px;
+  margin-bottom: 15px;
   border: 1px solid ${colors.thirth};
   box-shadow: 0.5px 0.5px 2px ${colors.thirth};
   border-radius: 15px;
-  margin-bottom: 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -134,10 +135,6 @@ const CardInput = styled.div`
   & #postInput {
     margin: 0px 5px;
     padding: 5px;
-    border: none;
-    resize: none;
-    overflow: auto;
-    outline: none;
     width: 90%;
     @media ${size.mobileM} {
       margin-right: 0px;
@@ -263,16 +260,13 @@ function OnePost() {
     formData.append('post', JSON.stringify(formToSend))
     isFilePicked && formData.append('image', selectedFile)
     if (formToSend.text === '' && !isFilePicked) return
-    try {
-      const response = await fetch(`http://localhost:4000/api/post/${postId}`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${profile.token}`,
-        },
-        body: formData,
-      })
-      const res = await response.json()
-      if (!res.error) {
+    const option = {
+      method: 'PUT',
+      data: formData
+    }
+    fetchApi(`http://localhost:2000/api/post/${postId}`, option, profile.token)
+    .then((res) => {
+      if (res.status === 200) {
         console.log(res)
         setFetchIsCorect(true)
         setReload(true)
@@ -281,9 +275,8 @@ function OnePost() {
         setFetchError(res.error)
         console.log(res.error)
       }
-    } catch (error) {
-      console.log(error)
-    }
+    }) 
+      
   }
 
   return (
@@ -350,6 +343,7 @@ function OnePost() {
           </TextAreaTitle>
           <CardInput>
             <TextareaAutosize
+            className='textAreaStyle'
               name="postInput"
               id="postInput"
               value={inputPostValue}

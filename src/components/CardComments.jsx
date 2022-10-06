@@ -3,6 +3,8 @@ import styled from 'styled-components'
 import colors from '../utils/colors'
 import { ProfileContext } from '../utils/context/Profile'
 import fetchApi from '../utils/hooks/fetchApi'
+import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
 
 const CardWrapper = styled.div`
   display: flex;
@@ -26,6 +28,9 @@ const CardUser = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
+  & a {
+    display: flex;
+  }
 `
 const CardAvatar = styled.img`
   width: 20px;
@@ -57,19 +62,15 @@ function CardComments({
   commsId,
   postId,
   text,
-  author,
   date,
-  avatar,
-  picture,
+  pictureUrl,
   userId,
-  likes,
-  dislikes,
-  usersDisliked,
-  usersLiked,
   setReload,
 }) {
   const { profile } = useContext(ProfileContext)
   const [isNotDelete, setIsNotDelete] = useState(true)
+  const [avatar, setAvatar] = useState()
+  const [author, setAuthor] = useState()
 
   function delComment() {
     const option = {
@@ -89,12 +90,29 @@ function CardComments({
       else return
     })
   }
+  useEffect(() => {
+    function getAuthor() {
+      const option = {
+        method: 'GET', 
+      }
+      fetchApi(
+        `http://localhost:2000/api/auth/${userId}`,
+        option,
+        profile.token
+      ).then((res) => {
+        setAuthor(res.data.pseudo)
+        setAvatar(res.data.avatar)    
+      })
+    }
+    getAuthor()
+  }, [profile.token, userId])
+
   return isNotDelete ? (
     <CardWrapper>
       <CardTitle>
         <CardUser>
-          <CardAvatar src={avatar} alt="avatar" />
-          <span>{author}</span>
+        <Link to={`/profile/${userId}`}><CardAvatar src={avatar} alt="avatar" /></Link>
+        <Link to={`/profile/${userId}`}>{author}</Link>
           <span className="commsDate">{date}</span>
         </CardUser>
         <CardButton>
@@ -106,7 +124,7 @@ function CardComments({
         </CardButton>
       </CardTitle>
       <span className="borderDotted" />
-      {picture && <CardPicture src={picture} alt="comments picture" />}
+      {pictureUrl && <CardPicture src={pictureUrl} alt="comments picture" />}
       <CardText>{text}</CardText>
     </CardWrapper>
   ) : (

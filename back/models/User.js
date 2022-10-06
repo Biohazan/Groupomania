@@ -5,7 +5,8 @@ const userSchema = mongoose.Schema({
     email: {type: String, require: true, unique: true},
     password: {type: String, require: true},
     pseudo: {type: String, require: true},
-    pictureUrl: {type: String}
+    avatar: {type: String},
+    describe: {type: String}
 })
 
 userSchema.plugin(uniqueValidator, {message: "Cet email est déja pris !"})

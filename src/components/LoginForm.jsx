@@ -8,7 +8,6 @@ import { useViewPass } from '../utils/hooks/useViewPass'
 import { ProfileContext } from '../utils/context/Profile'
 import { authContext } from '../utils/context/Auth'
 import fetchApi from '../utils/hooks/fetchApi'
-import defaultPicture from '../assets/profile.png'
 
 const MailWrapper = styled.div`
   margin: 5px;
@@ -106,14 +105,15 @@ function LoginForm({ setSelectedSignUp }) {
     }
     fetchApi(`http://localhost:2000/api/auth/login`, option).then((res) => {
       if (res.status === 200) {
+        console.log(res)
         login()
         setProfile({
           pseudo: res.data.pseudo,
           token: res.data.token,
-          picture: res.data.pictureUrl || defaultPicture,
+          avatar: res.data.avatar,
           userId: res.data.userId,
+          describe: res.data.describe
         })
-        // localStorage.setItem('isAuthed', true)
         setFetchIsCorect(true)
       } else console.log(res)
     })

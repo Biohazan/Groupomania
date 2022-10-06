@@ -18,12 +18,6 @@ const InputWrapper = styled.div`
   & textarea {
     padding: 5px;
     width: 80%;
-    height: 100%;
-    height: auto;
-    border: none;
-    resize: none;
-    overflow: auto;
-    outline: none;
     border-radius: 10px;
   }
 `
@@ -183,6 +177,7 @@ function Comments({ inputComments, setInputComments, postId }) {
         <InputWrapper>
           <TextareaAutosize
             autoFocus
+            className='textAreaStyle'
             name="inputForComments"
             id={'input' + postId}
             value={inputCommsValue}

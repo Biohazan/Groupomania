@@ -2,6 +2,7 @@ const Post = require('../models/Post')
 const fs = require('fs')
 
 exports.createPost = (req, res, next) => {
+  console.log(req.body)
   const postObject = JSON.parse(req.body.post)
   console.log(postObject)
   delete postObject._id
@@ -9,7 +10,7 @@ exports.createPost = (req, res, next) => {
   const post = new Post({
     ...postObject,
     userId: req.auth.userId,
-    imageUrl: req.file ? `${req.protocol}://${req.get('host')}/images/${
+    pictureUrl: req.file ? `${req.protocol}://${req.get('host')}/images/${
       req.file.filename
     }` : null,
     likes: 0,
@@ -25,24 +26,22 @@ exports.modifyPost = (req, res, next) => {
   const postObject = req.file
     ? {
         ...JSON.parse(req.body.post),
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${
+        pictureUrl: `${req.protocol}://${req.get('host')}/images/${
           req.file.filename
         }`,
       }
     : { ...JSON.parse(req.body.post)}
-  delete postObject.userId
   Post.findOne({ _id: req.params.id })
     .then((post) => {
       if (post.userId !== req.auth.userId) {
         res.status(401).json({ message: 'Non autorisé' })
       } else {
         if (req.file) {
-          const filename = post.imageUrl.split('/images')[1]
+          const filename = post.pictureUrl.split('/images')[1]
           fs.unlink(`images/${filename}`, () => {
             console.log('Image supprimé')
           })
         }
-        
         Post.updateOne(
           { _id: req.params.id },
           { ...postObject, _id: req.params.id }
@@ -60,8 +59,8 @@ exports.deletePost = (req, res, next) => {
       if (post.userId !== req.auth.userId) {
         res.status(401).json({ message: 'Non autorisé' })
       } else {
-        if (post.imageUrl) {
-          const filename = post.imageUrl.split('/images')[1]
+        if (post.pictureUrl) {
+          const filename = post.pictureUrl.split('/images')[1]
           fs.unlink(`images/${filename}`, () => {
             console.log('Image supprimé')
           })

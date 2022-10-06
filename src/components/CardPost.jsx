@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useContext, useRef } from 'react'
 import styled from 'styled-components'
 import colors from '../utils/colors'
 import { ProfileContext } from '../utils/context/Profile'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import Likes from './Likes'
 import Comments from './Comment'
 import fetchApi from '../utils/hooks/fetchApi'
@@ -22,12 +22,12 @@ const CardAvatar = styled.img`
   width: 30px;
   height: 30px;
   border-radius: 50px;
+  cursor: pointer;
 `
 const CardTitle = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
   align-self: flex-start;
   padding: 10px;
   width: 97%;
@@ -81,10 +81,8 @@ width: 100%;
 function CardPost({
   cardId,
   text,
-  author,
   date,
-  avatar,
-  picture,
+  pictureUrl,
   userId,
   likes,
   dislikes,
@@ -98,6 +96,8 @@ function CardPost({
   const [isModify, setIsModify] = useState(false)
   const [isDelete, setIsDelete] = useState(false)
   const [inputComments, setInputComments] = useState(false)
+  const [avatar, setAvatar] = useState()
+  const [author, setAuthor] = useState()
   
   const pictureStyle = {
     paddingBottom: !text && '5px',
@@ -112,15 +112,32 @@ function CardPost({
         setIsDelete(true)
       })
   }
+useEffect(() => {
+  function getAuthor() {
+    const option = {
+      method: 'GET', 
+    }
+    fetchApi(
+      `http://localhost:2000/api/auth/${userId}`,
+      option,
+      profile.token
+    ).then((res) => {
+      setAuthor(res.data.pseudo)
+      setAvatar(res.data.avatar)    
+    })
+  }
+  getAuthor()
+}, [profile.token, userId])
+  
 
   return !isDelete ? (
     <CardWrapper ref={elementRef}>
       <CardTitle>
         <div className="userCard">
-          <CardAvatar src={avatar} alt="avatar" />
+        <Link to={`/profile/${userId}`}><CardAvatar src={avatar} alt="avatar" /></Link>
           <div className="authorDate">
-            {author} <br />
-            {date}
+            <Link to={`/profile/${userId}`} style={{fontSize: '13px'}}>{author}</Link>
+            <span style={{fontSize: '10px'}}>{date}</span>
           </div>
         </div>
         {userId === profile.userId && (
@@ -131,9 +148,9 @@ function CardPost({
           </div>
         )}
       </CardTitle>
-      {picture && (
+      {pictureUrl && (
         <CardPicture
-          src={picture}
+          src={pictureUrl}
           style={pictureStyle}
           alt="post utilisateur"
         />
@@ -157,6 +174,7 @@ function CardPost({
     </CardWrapper>
   ) : (
     setTimeout(() => {
+      oneOnce.current = false
       setReload(true)
     }, 2000) && <DeletedPost> Post Supprimer </DeletedPost>
   )

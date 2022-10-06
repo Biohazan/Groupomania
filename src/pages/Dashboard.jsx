@@ -85,8 +85,8 @@ function Dashboard() {
               text={post.text}
               author={post.author}
               date={post.date}
-              avatar={post.avatarAuthor}
-              picture={post.imageUrl}
+              avatar={post.avatar}
+              pictureUrl={post.pictureUrl}
               userId={post.userId}
               likes={post.likes}
               dislikes={post.dislikes}

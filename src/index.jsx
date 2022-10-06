@@ -41,7 +41,7 @@ root.render(
                     }
                   />
                   <Route
-                    path="/profile"
+                    path="/profile/:userId"
                     element={
                       <RequireAuth>
                         <Profile />
