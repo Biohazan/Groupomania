@@ -8,8 +8,6 @@ const commentsCtrl = require('../controllers/comments')
 router.post('/:postId', auth, multer, commentsCtrl.createComments)
 router.put('/:id', auth, multer, commentsCtrl.modifyComments)
 router.post('/:postId/:commsId', auth, commentsCtrl.deleteComments)
-// router.get('/:postId', auth, commentsCtrl.getAllComments);
-// router.post('/:id/like', auth, commentsCtrl.likeComments)
 router.get('/:postId', auth, commentsCtrl.getOneComments);
 
 module.exports = router

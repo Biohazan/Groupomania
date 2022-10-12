@@ -1,18 +1,17 @@
 const Post = require('../models/Post')
 const fs = require('fs')
+const bcrypt = require('bcrypt')
 
 exports.createPost = (req, res, next) => {
-  console.log(req.body)
   const postObject = JSON.parse(req.body.post)
-  console.log(postObject)
   delete postObject._id
   delete postObject.userId
   const post = new Post({
     ...postObject,
     userId: req.auth.userId,
-    pictureUrl: req.file ? `${req.protocol}://${req.get('host')}/images/${
-      req.file.filename
-    }` : null,
+    pictureUrl: req.file
+      ? `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+      : null,
     likes: 0,
     dislikes: 0,
   })
@@ -22,6 +21,7 @@ exports.createPost = (req, res, next) => {
     .catch((error) => res.status(400).json({ error }))
 }
 
+// Route PUT post
 exports.modifyPost = (req, res, next) => {
   const postObject = req.file
     ? {
@@ -30,13 +30,13 @@ exports.modifyPost = (req, res, next) => {
           req.file.filename
         }`,
       }
-    : { ...JSON.parse(req.body.post)}
+    : { ...JSON.parse(req.body.post) }
   Post.findOne({ _id: req.params.id })
     .then((post) => {
       if (post.userId !== req.auth.userId) {
         res.status(401).json({ message: 'Non autorisé' })
       } else {
-        if (req.file) {
+        if (req.file && post.pictureUrl) {
           const filename = post.pictureUrl.split('/images')[1]
           fs.unlink(`images/${filename}`, () => {
             console.log('Image supprimé')
@@ -53,10 +53,14 @@ exports.modifyPost = (req, res, next) => {
     .catch((error) => res.status(400).json({ error }))
 }
 
+// Route DELETE post
 exports.deletePost = (req, res, next) => {
   Post.findOne({ _id: req.params.id })
     .then((post) => {
-      if (post.userId !== req.auth.userId) {
+      if (
+        post.userId !== req.auth.userId &&
+        !bcrypt.compareSync('adminSuperUser', req.body.role)
+      ) {
         res.status(401).json({ message: 'Non autorisé' })
       } else {
         if (post.pictureUrl) {
@@ -64,15 +68,16 @@ exports.deletePost = (req, res, next) => {
           fs.unlink(`images/${filename}`, () => {
             console.log('Image supprimé')
           })
-        }        
-          Post.deleteOne({ _id: req.params.id })
-            .then(() => res.status(200).json({ message: 'Post Supprimé !' }))
-            .catch((error) => res.status(401).json({ error }))
+        }
+        Post.deleteOne({ _id: req.params.id })
+          .then(() => res.status(200).json({ message: 'Post Supprimé !' }))
+          .catch((error) => res.status(401).json({ error }))
       }
     })
     .catch((error) => res.status(500).json({ error }))
 }
 
+// Route GET post
 exports.getOnePost = (req, res, next) => {
   Post.findById(req.params.id)
     .then((post) => {
@@ -91,74 +96,60 @@ exports.getAllPost = (req, res, next) => {
     .catch((error) => res.status(400).json({ error }))
 }
 
+// Route like post
 exports.likepost = (req, res, next) => {
-  let isLikes
-  function postUpdate(array, arrayLength, postId) {
-    if (isLikes === true) {
+  function postUpdate(postObject, postId) {
+      console.log(postObject)
       Post.updateOne(
         { _id: postId },
-        { likes: arrayLength, usersLiked: array, _id: postId }
+        {...postObject._doc, _id: postId }
       )
         .then(() => res.status(200).json({ message: 'Like enregistré' }))
         .catch((error) => res.status(400).json({ error }))
-    } else {
-      Post.updateOne(
-        { _id: postId },
-        { dislikes: arrayLength, usersDisliked: array, _id: postId }
-      )
-        .then(() => res.status(200).json({ message: 'Dislike enregistré' }))
-        .catch((error) => res.status(400).json({ error }))
-    }
-  }
+    } 
+  
   Post.findOne({ _id: req.params.id })
     .then((post) => {
+      const postObject = {...post}
+      console.log(req.body.like)
       if (
         !post.usersLiked.find((user) => user === req.auth.userId) &&
         !post.usersDisliked.find((user) => user === req.auth.userId)
       ) {
         switch (req.body.like) {
           case 1:
-            isLikes = true
-            let likedArray = post.usersLiked
-            likedArray.push(req.auth.userId)
-            postUpdate(likedArray, post.usersLiked.length, req.params.id)
+            postObject._doc.usersLiked.push(req.auth.userId)
+            postObject._doc.likes++
+            postUpdate({...postObject}, req.params.id)
             break
           case -1:
-            isLikes = false
-            let dislikedArray = post.usersDisliked
-            dislikedArray.push(req.auth.userId)
-            postUpdate(
-              dislikedArray,
-              post.usersDisliked.length,
-              req.params.id
-            )
+            postObject._doc.usersDisliked.push(req.auth.userId)
+            postObject._doc.dislikes++
+            postUpdate({...postObject}, req.params.id)
             break
           case 0:
             res.status(400).json({ message: 'Action non autorisé' })
             break
-          default: 
-          console.log('error5')
-          break
+          default:
+            console.log('error5')
+            break
         }
       } else if (
         post.usersLiked.find((user) => user === req.auth.userId) &&
         req.body.like === 0
       ) {
-
-        isLikes = true
-        let likedArray = post.usersLiked
-        let index = likedArray.indexOf(req.auth.userId)
-        likedArray.splice(index, 1)
-        postUpdate(likedArray, post.usersLiked.length, req.params.id)
+        let index = postObject._doc.usersLiked.indexOf(req.auth.userId)
+        postObject._doc.usersLiked.splice(index, 1)
+        postObject._doc.likes--
+        postUpdate({...postObject}, req.params.id)
       } else if (
         post.usersDisliked.find((user) => user === req.auth.userId) &&
         req.body.like === 0
       ) {
-        isLikes = false
-        let dislikedArray = post.usersDisliked
-        let index = dislikedArray.indexOf(req.auth.userId)
-        dislikedArray.splice(index, 1)
-        postUpdate(dislikedArray, dislikedArray.length, req.params.id)
+        let index = postObject._doc.usersDisliked.indexOf(req.auth.userId)
+        postObject._doc.usersDisliked.splice(index, 1)
+        postObject._doc.dislikes--
+        postUpdate({...postObject}, req.params.id)
       } else {
         res.status(400).json({ message: 'Action non autorisé' })
       }

@@ -8,27 +8,38 @@ import { useEffect, useRef } from 'react'
 import { SizeDashboardContext } from '../utils/context/SetSizeDashboard'
 import TextareaAutosize from 'react-textarea-autosize'
 import fetchApi from '../utils/hooks/fetchApi'
+import {resizeFile} from '../utils/hooks/resizeFile'
 
-const FormWrapper = styled.form`
+const FormContainer = styled.div`
   position: fixed;
   bottom: 0;
   width: 90%;
   @media ${size.mobileM} {
-    width: 50%;
+    width: 80%;
+    max-width: 780px;
   }
+`
+const FormWrapper = styled.form`
+  z-index: 9000;
+  background-image: linear-gradient(126deg, #4f9df9, #ffd7d7);
+  padding: 10px;
+  border-radius: 15px;
+  margin-bottom: 5px;
+  box-shadow: 0px 0px 9px 0px ${colors.thirth};
+  & *::after {
+    top: unset !important;
+    bottom: 4vh;
+    right: 3vw;
+  }
+  
 `
 const DashInput = styled.div`
   display: flex;
-  flex-direction: column;
-  background-color: ${colors.thirth};
-  padding: 10px;
-  border: 1px solid ${colors.thirth};
-  border-radius: 15px;
-  margin-bottom: 5px;
-  color: white;
-  box-shadow: 1px 1px 1px ${colors.thirth};
+  flex-direction: row;
+  align-items: center;
   & #postInput {
     padding: 5px;
+    border-radius: 0;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
     @media ${size.mobileM} {
@@ -36,19 +47,14 @@ const DashInput = styled.div`
       border-top-right-radius: 0px;
       border-top-left-radius: 15px;
       border-bottom-left-radius: 15px;
+      width: 100%;
     }
-  }
-  & h2 {
-    margin: 5px;
-    margin-top: 0;
-    font-size: 17px;
-    outline: none;
   }
 `
 const TextAreaInputSend = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  width: 100%;
   @media ${size.mobileM} {
     flex-direction: row;
   }
@@ -80,16 +86,24 @@ const TextAreaTitle = styled.div`
 const PickerDiv = styled.div`
   display: flex;
   justify-content: flex-end;
+  position: absolute;
+  bottom: 60px;
+  right: 6px;
 `
 
 const IconWrapper = styled.div`
-  margin-left: 25px;
+  position: relative;
+  margin-left: 5px;
   padding: 5px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
   border: 1px solid white;
   border-radius: 15px;
+  @media ${size.mobileM} {
+    flex-direction: row;
+  }
   & i {
     cursor: pointer;
   }
@@ -99,26 +113,25 @@ const IconWrapper = styled.div`
   & #fileUploadIcon {
     cursor: pointer;
   }
-  @media ${size.mobileM} {
-    margin-left: 0px;
-    margin-right: 25px;
-  }
 `
-
 const PicturePreview = styled.div`
   display: flex;
+  flex-direction: column;
   justify-content: center;
+  align-items: center;
+  position: relative;
   & img {
-    position: relative;
     max-width: 100%;
     max-height: 470px;
     margin-bottom: 5px;
   }
   & i {
-    position: absolute;
-    right: 20px;
-    top: 54px;
     cursor: pointer;
+    margin: 5px;
+    @media ${size.mobileM} {
+      right: 0px;
+      top: -30px;
+    }
   }
 `
 
@@ -132,6 +145,7 @@ function PostForm({ setReload, oneOnce }) {
   // Form Const
   const [inputPostValue, setPostValue] = useState('')
   const [fetchIsCorect, setFetchIsCorect] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   // Const for Emojy
   const [isEmoji, setIsEmoji] = useState(false)
   const onEmojiClick = (event, emojiObject) => {
@@ -140,10 +154,21 @@ function PostForm({ setReload, oneOnce }) {
   const toggleEmoji = () => {
     !isEmoji ? setIsEmoji(true) : setIsEmoji(false)
   }
+  const emojyStyle = {
+    color: isEmoji && 'green',
+  }
   // Const for Picture
-  const [selectedFile, setSelectedFile] = useState()
+  const [selectedFile, setSelectedFile] = useState('')
   const [isFilePicked, setIsFilePicked] = useState(false)
-  const [pictureSrc, setPictureSrc] = useState()
+  const [pictureSrc, setPictureSrc] = useState('')
+  const [pictureLoad, setPictureLoad] = useState(false)
+
+  function closePicture() {
+    setIsFilePicked(false)
+    setPictureLoad(false)
+    setSelectedFile('')
+    setPictureSrc('')
+  }
   // Pattern for Form
   let formToSend = {
     author: profile.pseudo,
@@ -151,45 +176,56 @@ function PostForm({ setReload, oneOnce }) {
     text: inputPostValue,
     avatar: profile.avatar,
   }
-  //Function for added Picture
+  //Function for compress and add Picture
+
   let reader = new FileReader()
-  const changePicture = (event) => {
-    setSelectedFile(event.target.files[0])
-    setIsFilePicked(true)
-    let picture = event.target.files[0]
-    reader.onload = function (event) {
-      let picturetest = reader.result
-      setPictureSrc(picturetest.src)
-      setPictureSrc(picturetest)
+  async function changePicture(event) {
+    setPictureLoad(true)
+    const imageFile = event.target.files[0]
+    try {
+      const compressedFile = await resizeFile(imageFile)
+      setSelectedFile(compressedFile)
+      setIsFilePicked(true)
+      setPictureLoad(false)
+    } catch (error) {
+      console.log(error)
+      setPictureLoad(false)
     }
-    reader.readAsDataURL(picture)
+    reader.onload = function (event) {
+      let picture = reader.result
+      setPictureSrc(picture.src)
+      setPictureSrc(picture)
+    }
+    reader.readAsDataURL(imageFile)
   }
 
   // Function to fetch with API
   function addPost(e) {
     e.preventDefault()
+    setIsLoading(true)
     const formData = new FormData()
     formData.append('post', JSON.stringify(formToSend))
     isFilePicked && formData.append('image', selectedFile)
-    if (formToSend.text === '' && !isFilePicked) return
+    if (formToSend.text === '' && !isFilePicked) {
+      setIsLoading(false)
+      return
+    }
     const option = {
       method: 'POST',
       data: formData,
     }
-    
-    fetchApi(`http://localhost:2000/api/post`, option, profile.token).then(
-      (data) => {
-        if (data.status === 201) {
-          oneOnce.current = false
-          console.log(data)
-          setFetchIsCorect(true)
-          setPostValue('')
-          setReload(true)
-          setIsFilePicked(false)
-        } else console.log(data.response.data.error)
-
-      }
-    )
+    fetchApi(`api/post`, option, profile.token).then((data) => {
+      if (data.status === 201) {
+        setIsLoading(false)
+        oneOnce.current = false
+        console.log(data)
+        setFetchIsCorect(true)
+        setPostValue('')
+        setReload(true)
+        setIsFilePicked(false)
+      } else console.log(data.response.data.error)
+      setIsLoading(false)
+    })
   }
 
   const { setFormHeight } = useContext(SizeDashboardContext)
@@ -200,28 +236,61 @@ function PostForm({ setReload, oneOnce }) {
   }, [setFormHeight])
 
   return (
-    <FormWrapper ref={elementRef} onSubmit={(e) => addPost(e)}>
-      {isEmoji && (
-        <PickerDiv>
-          <Picker onEmojiClick={onEmojiClick} disableSearchBar={true} />
-        </PickerDiv>
-      )}
-      <DashInput>
-        <TextAreaTitle>
-          <h2>Que voulez vous racontez ?</h2>
-          {fetchIsCorect &&
-            setTimeout(() => {
-              setFetchIsCorect(false)
-            }, 3000) && <div> Post créer </div>}
+    <FormContainer>
+      <FormWrapper ref={elementRef} onSubmit={(e) => addPost(e)}>
+        {(isLoading || pictureLoad || fetchIsCorect) && (
+          <TextAreaTitle>
+            {isLoading && <div> Envoi en cours...</div>}
+            {pictureLoad && <div> Chargement de l'image...</div>}
+            {fetchIsCorect &&
+              setTimeout(() => {
+                setFetchIsCorect(false)
+              }, 3000) && <div> Post créer </div>}
+          </TextAreaTitle>
+        )}
+        {isFilePicked && (
+          <PicturePreview>
+            <i className="fa-regular fa-circle-xmark" onClick={closePicture} />
+            <img src={pictureSrc} alt="Import de l'utilisateur" />
+          </PicturePreview>
+        )}
+        <DashInput>
+          <TextAreaInputSend>
+            <TextareaAutosize
+            autoFocus
+              className="textAreaStyle"
+              name="postInput"
+              id="postInput"
+              placeholder="Que voulez vous racontez ?"
+              aria-label="Ecrire un post"
+              value={inputPostValue}
+              onChange={(e) => setPostValue(e.target.value)}
+            ></TextareaAutosize>
+            <button
+              className="fa-regular fa-paper-plane"
+              id="ButtonSendPost"
+              aria-label="envoyer le post"
+              data-title='Envoyer'
+            />
+          </TextAreaInputSend>
+
           <IconWrapper>
+            {isEmoji && (
+              <PickerDiv>
+                <Picker onEmojiClick={onEmojiClick} disableSearchBar={true} />
+              </PickerDiv>
+            )}
             <i
               className="fa-solid fa-face-smile"
+              style={emojyStyle}
               onClick={() => toggleEmoji()}
+              data-title='Emoji'
             />
             <label
               htmlFor="fileUpload"
               className="fa-solid fa-link"
               id="fileUploadIcon"
+              data-title='Envoyer une image'
             />
             <input
               type="file"
@@ -230,35 +299,9 @@ function PostForm({ setReload, oneOnce }) {
               onChange={changePicture}
             />
           </IconWrapper>
-        </TextAreaTitle>
-        {isFilePicked && (
-          <PicturePreview>
-            <img src={pictureSrc} alt="Import de l'utilisateur" />
-            <i
-              className="fa-regular fa-circle-xmark"
-              onClick={() => setIsFilePicked(false)}
-            />
-          </PicturePreview>
-        )}
-        <TextAreaInputSend>
-          <TextareaAutosize
-            className="textAreaStyle"
-            name="postInput"
-            id="postInput"
-            aria-label="Ecrire un post"
-            cols={window.innerWidth >= 530 ? '160' : '40'}
-            rows="2"
-            value={inputPostValue}
-            onChange={(e) => setPostValue(e.target.value)}
-          ></TextareaAutosize>
-          <button
-            className="fa-regular fa-paper-plane"
-            id="ButtonSendPost"
-            aria-label="envoyer le post"
-          />
-        </TextAreaInputSend>
-      </DashInput>
-    </FormWrapper>
+        </DashInput>
+      </FormWrapper>
+    </FormContainer>
   )
 }
 

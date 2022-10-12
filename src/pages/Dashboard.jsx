@@ -37,7 +37,7 @@ const CardWrapper = styled.div`
     border: 3px solid ${colors.secondary};
   }
   @media ${size.mobileM} {
-    width: 50%;
+    width: 80%;
     max-width: 780px;
     padding: 0px 2vw;
   }
@@ -47,11 +47,20 @@ function Dashboard() {
   const { profile, setProfile } = useContext(ProfileContext)
   const [reload, setReload] = useState(false)
   const [datas, setData] = useState([])
-  const { sizeDashbord } = useContext(SizeDashboardContext)
+  const { windowHeigth, formHeight, headerHeight} = useContext(SizeDashboardContext)
   const [isLoading, setIsLoading] = useState(false)
   const { logout } = useContext(authContext)
   const oneOnce = useRef(false)
+  const heightDasboard = useRef()
 
+  useEffect(() => {
+    setTimeout(() => {
+      heightDasboard.current = windowHeigth - formHeight - headerHeight - 5
+    }, PostForm)
+    
+  }, [windowHeigth, formHeight, headerHeight])
+
+  // Function to GET all Post
   useEffect(() => {
     if (oneOnce.current) return
     else oneOnce.current = true
@@ -59,7 +68,7 @@ function Dashboard() {
     const option = {
       method: 'GET',
     }
-    fetchApi('http://localhost:2000/api/post/', option, profile.token).then(
+    fetchApi('api/post/', option, profile.token).then(
       (res) => {
         if (res.error && res.error.name === 'TokenExpiredError') {
           console.log('yess Papa')
@@ -76,7 +85,7 @@ function Dashboard() {
       {(profile.token === 'TokenExpiredError' || profile.token === '') &&
         logout() && <Navigate to={'/'} />}
       {isLoading && <Loader />}
-      <CardWrapper style={{ height: sizeDashbord }}>
+      <CardWrapper style={{ height: heightDasboard.current }}>
         {datas &&
           datas.map((post) => (
             <CardPost
@@ -94,6 +103,7 @@ function Dashboard() {
               usersLiked={post.usersLiked}
               setReload={setReload}
               oneOnce={oneOnce}
+              isLoading={isLoading}
             />
           ))}
       </CardWrapper>

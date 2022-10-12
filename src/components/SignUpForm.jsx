@@ -1,25 +1,23 @@
 import styled from 'styled-components'
 import { StyledHomeButton } from '../utils/styles/button'
-import colors from '../utils/colors'
 import { useContext, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useViewPass } from '../utils/hooks/useViewPass'
+import viewPass from '../utils/hooks/viewPass'
 import { authContext } from '../utils/context/Auth'
 import fetchApi from '../utils/hooks/fetchApi'
 import { ProfileContext } from '../utils/context/Profile'
-import defaultPicture from '../assets/profile.png'
 
 const SignUpWrapper = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-top: 7vh;
+  margin-top: 3vh;
 `
 const Title = styled.h1`
-  color: white;
   font-size: 25px;
   text-align: center;
+  padding: 5px;
 `
 const FormWrapper = styled.form`
   align-self: center;
@@ -28,6 +26,7 @@ const FormWrapper = styled.form`
   align-items: center;
   padding: 15px;
   margin-top: 5vh;
+  width: 80%;
   opacity: 0;
   transform: translateY(60px);
   animation: loginTranslate 1s ease-in-out forwards;
@@ -38,60 +37,10 @@ const FormWrapper = styled.form`
     }
   }
 `
-const PseudoWrapper = styled.div`
-  margin: 5px;
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-  color: white;
-  padding: 15px;
-  border: 0.5px solid ${colors.secondary};
-  border-radius: 15px;
-  & #pseudo {
-    border-radius: 5px;
-    border: none;
-    padding: 5px;
-    margin-right: 30px;
-  }
-`
-const MailWrapper = styled.div`
-  margin: 5px;
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-  color: white;
-  padding: 15px;
-  border: 0.5px solid ${colors.secondary};
-  border-radius: 15px;
-  & #mail {
-    border-radius: 5px;
-    border: none;
-    padding: 5px;
-    margin-right: 30px;
-  }
-`
+const PseudoWrapper = styled.div``
+const MailWrapper = styled.div``
 const PasswordWrapper = styled.div`
-  margin: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  color: white;
-  padding: 15px;
-  border: 0.5px solid ${colors.secondary};
-  border-radius: 15px;
-  & #password {
-    border-radius: 5px;
-    border: none;
-    padding: 5px;
-  }
-  & #check {
-    cursor: pointer;
-    margin-left: 12px;
-    &:hover {
-      transform: scale(1.1);
-    }
-  }
+  position: relative;
 `
 const ButtStyle = {
   marginTop: '20px ',
@@ -99,35 +48,33 @@ const ButtStyle = {
 const ButtonSignUp = {
   padding: '10px',
   marginTop: '10px',
-  fontSize: '10px',
+  fontSize: '12px',
 }
 
 function SignUpForm({ setSelectedSignUp, setSelectedLogin }) {
   const [inputMailValue, setMailValue] = useState('')
   const [inputPseudoValue, setPseudoValue] = useState('')
   const [inputPassValue, setPassValue] = useState('')
-  const { colorView, passType, viewPass } = useViewPass()
   const { login, isAuthed } = useContext(authContext)
   const { setProfile } = useContext(ProfileContext)
   const [fetchError, setFetchError] = useState([])
-  // const [fetchIsCorect, setFetchIsCorect] = useState(false)
 
-  // let formToSend = {
-  //   pseudo: inputPseudoValue,
-  //   email: inputMailValue,
-  //   password: inputPassValue,
-  // }
-  async function sendSignUp(e) {
+  const signUpForm = {
+    pseudo: inputPseudoValue,
+    email: inputMailValue,
+    password: inputPassValue,
+  }
+
+  // Function to register
+  function sendSignUp(e) {
     e.preventDefault()
+    const formData = new FormData()
+    formData.append('signup', JSON.stringify(signUpForm))
     const option = {
       method: 'POST',
-      data: {
-        pseudo: inputPseudoValue,
-        email: inputMailValue,
-        password: inputPassValue,
-      },
+      data: formData,
     }
-    fetchApi(`http://localhost:2000/api/auth/signup`, option).then((res) => {
+    fetchApi(`api/auth/signup`, option).then((res) => {
       if (res.status === 201) {
         login()
         setProfile({
@@ -135,12 +82,14 @@ function SignUpForm({ setSelectedSignUp, setSelectedLogin }) {
           token: res.data.token,
           avatar: res.data.avatar,
           userId: res.data.userId,
-          describe: res.data.describe
+          describe: res.data.describe,
+          role: res.data.role,
         })
-        // setFetchIsCorect(true)
       } else if (res.response.data.error.name === 'ValidationError') {
+        console.log(res)
         setFetchError(res.response.data.error.errors.email.message)
-      } else setFetchError(res.response.data.error)
+      } else console.log(res)
+      setFetchError(res.response.data.error)
     })
   }
 
@@ -149,7 +98,7 @@ function SignUpForm({ setSelectedSignUp, setSelectedLogin }) {
       {isAuthed === true && <Navigate to={'/dashboard'} />}
       <Title>
         Pour vous inscrire, <br />
-        Merci de remplir les champs :
+        veuillez remplir le formulaire :
       </Title>
       {fetchError && Array.isArray(fetchError) ? (
         fetchError.map((err) => <span key={err}>{err}</span>)
@@ -157,7 +106,7 @@ function SignUpForm({ setSelectedSignUp, setSelectedLogin }) {
         <span>{fetchError}</span>
       )}
       <FormWrapper onSubmit={(e) => sendSignUp(e)}>
-        <PseudoWrapper>
+        <PseudoWrapper className="formInput">
           <label htmlFor="pseudo">Pseudo: </label>
           <input
             type="text"
@@ -166,7 +115,7 @@ function SignUpForm({ setSelectedSignUp, setSelectedLogin }) {
             onChange={(e) => setPseudoValue(e.target.value)}
           />
         </PseudoWrapper>
-        <MailWrapper>
+        <MailWrapper className="formInput">
           <label htmlFor="mail">Email: </label>
           <input
             type="text"
@@ -175,29 +124,23 @@ function SignUpForm({ setSelectedSignUp, setSelectedLogin }) {
             onChange={(e) => setMailValue(e.target.value)}
           />
         </MailWrapper>
-        <PasswordWrapper>
+        <PasswordWrapper className="formInput">
           <label htmlFor="password">Mot de passe: </label>
           <div>
             <input
-              type={passType}
+              type='password'
               id="password"
               value={inputPassValue}
               onChange={(e) => setPassValue(e.target.value)}
             />
             <span
               type="checkbox"
-              id="check"
-              onClick={() => viewPass()}
-              style={colorView}
-              className="fa-solid fa-eye"
+              onClick={(e) => viewPass(e)}
+              className="fa-solid fa-eye check"
             />
           </div>
         </PasswordWrapper>
-        <StyledHomeButton
-          type="submit"
-          id="enter"
-          style={ButtStyle}
-        >
+        <StyledHomeButton type="submit" id="enter" style={ButtStyle}>
           S'enregistrer
         </StyledHomeButton>
         <StyledHomeButton

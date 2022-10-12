@@ -6,6 +6,7 @@ export const defaultProfile = {
   avatar: '',
   userId: '',
   describe: '',
+  role: '',
 }
 
 export const ProfileContext = createContext()

@@ -16,43 +16,43 @@ import Profile from './pages/Profile'
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
   <React.StrictMode>
-      <Router>
-        <ProfilePovider>
-            <AuthProvider>
-              <GlobalStyle />
-              <SizeDashboardProvider>
-                <Header />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <RequireAuth>
-                        <Dashboard />
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/:postId"
-                    element={
-                      <RequireAuth>
-                        <OnePost />
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/profile/:userId"
-                    element={
-                      <RequireAuth>
-                        <Profile />
-                      </RequireAuth>
-                    }
-                  />
-                  <Route path="*" element={<Error />} />
-                </Routes>
-              </SizeDashboardProvider>
-            </AuthProvider>
-        </ProfilePovider>
-      </Router>
+    <Router>
+      <ProfilePovider>
+        <AuthProvider>
+          <GlobalStyle />
+          <SizeDashboardProvider>
+            <Header />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <RequireAuth>
+                    <Dashboard />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/:postId"
+                element={
+                  <RequireAuth>
+                    <OnePost />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/profile/:userId"
+                element={
+                  <RequireAuth>
+                    <Profile />
+                  </RequireAuth>
+                }
+              />
+              <Route path="*" element={<Error />} />
+            </Routes>
+          </SizeDashboardProvider>
+        </AuthProvider>
+      </ProfilePovider>
+    </Router>
   </React.StrictMode>
 )

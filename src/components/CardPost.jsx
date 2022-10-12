@@ -7,6 +7,8 @@ import { Link, Navigate } from 'react-router-dom'
 import Likes from './Likes'
 import Comments from './Comment'
 import fetchApi from '../utils/hooks/fetchApi'
+import { Loader } from '../utils/styles/Loader'
+const bcrypt = require('bcryptjs')
 
 const CardWrapper = styled.div`
   border: 1px solid ${colors.thirth};
@@ -20,7 +22,6 @@ const CardWrapper = styled.div`
 `
 const CardAvatar = styled.img`
   width: 30px;
-  height: 30px;
   border-radius: 50px;
   cursor: pointer;
 `
@@ -29,24 +30,27 @@ const CardTitle = styled.div`
   align-items: center;
   justify-content: space-between;
   align-self: flex-start;
-  padding: 10px;
-  width: 97%;
+  width: 100%;
+  padding: 5px 0px;
   text-shadow: 1px 1px ${colors.thirth};
   border-bottom: 1px dotted ${colors.thirth};
   & .userCard {
     display: flex;
     align-items: center;
     gap: 5px;
+    padding: 5px;
   }
   & .authorDate {
     display: flex;
     flex-direction: column;
+    font-size: 13px;
   }
   & .modDelButton {
     display: flex;
-    gap: 10px;
+    font-size: 13px;
+    margin-right: 5px;
     & span {
-      padding: 7px;
+      padding: 5px;
       cursor: pointer;
       &:hover {
         transform: scale(1.1);
@@ -56,7 +60,6 @@ const CardTitle = styled.div`
   }
 `
 const CardPicture = styled.img`
-  height: 100%;
   width: 100%;
   border-bottom: 1px dotted ${colors.thirth};
 `
@@ -70,9 +73,8 @@ const DeletedPost = styled.div`
   padding: 15px;
   text-align: center;
 `
-
 const CommsWrapper = styled.div`
-width: 100%;
+  width: 100%;
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -89,58 +91,76 @@ function CardPost({
   usersDisliked,
   usersLiked,
   setReload,
-  oneOnce
+  oneOnce,
+  isLoading
 }) {
   const { profile } = useContext(ProfileContext)
   const elementRef = useRef(null)
   const [isModify, setIsModify] = useState(false)
   const [isDelete, setIsDelete] = useState(false)
   const [inputComments, setInputComments] = useState(false)
-  const [avatar, setAvatar] = useState()
-  const [author, setAuthor] = useState()
-  
+  const [avatar, setAvatar] = useState('')
+  const [author, setAuthor] = useState('')
+  const [fetchError, setFetchError] = useState(false)
+
   const pictureStyle = {
     paddingBottom: !text && '5px',
   }
-
+  // Function to DELETE a card
   function delCard() {
     const option = {
-      method: 'DELETE'
-    }
-    fetchApi(`http://localhost:2000/api/post/${cardId}`, option, profile.token)
-      .then((res) => {
-        setIsDelete(true)
-      })
-  }
-useEffect(() => {
-  function getAuthor() {
-    const option = {
-      method: 'GET', 
+      method: 'DELETE',
+      data: { role: profile.role },
     }
     fetchApi(
-      `http://localhost:2000/api/auth/${userId}`,
+      `api/post/${cardId}`,
       option,
       profile.token
     ).then((res) => {
-      setAuthor(res.data.pseudo)
-      setAvatar(res.data.avatar)    
+      if (res.status === 200) setIsDelete(true)
+      else setFetchError(true)
     })
   }
-  getAuthor()
-}, [profile.token, userId])
-  
+
+  // Function to get Author information
+  useEffect(() => {
+    function getAuthor() {
+      const option = {
+        method: 'GET',
+      }
+      fetchApi(
+        `api/auth/${userId}`,
+        option,
+        profile.token
+      ).then((res) => {
+        setAuthor(res.data.pseudo)
+        setAvatar(res.data.avatar)
+      })
+    }
+    getAuthor()
+  }, [profile.token, userId])
 
   return !isDelete ? (
     <CardWrapper ref={elementRef}>
       <CardTitle>
         <div className="userCard">
-        <Link to={`/profile/${userId}`}><CardAvatar src={avatar} alt="avatar" /></Link>
+          <Link to={`/profile/${userId}`}>
+            <CardAvatar src={avatar} alt="avatar" />
+          </Link>
           <div className="authorDate">
-            <Link to={`/profile/${userId}`} style={{fontSize: '13px'}}>{author}</Link>
-            <span style={{fontSize: '10px'}}>{date}</span>
+            <Link to={`/profile/${userId}`}>
+              {author}
+            </Link>
+            <span style={{ fontSize: '10px' }}>{date}</span>
           </div>
         </div>
-        {userId === profile.userId && (
+        {fetchError && (
+          <div style={{ position: 'absolute', bottom: '135px' }}>
+            Une erreur c'est produite
+          </div>
+        )}
+        {(userId === profile.userId ||
+          bcrypt.compareSync('adminSuperUser', profile.role)) && (
           <div className="modDelButton">
             <span onClick={() => setIsModify(true)}> Modifier</span>{' '}
             <span onClick={delCard}> Supprimer </span>
@@ -149,14 +169,19 @@ useEffect(() => {
         )}
       </CardTitle>
       {pictureUrl && (
-        <CardPicture
+        <Link to={`/${cardId} `} style={{width: '100%'}}>
+          {isLoading ? <Loader /> : 
+          <CardPicture
           src={pictureUrl}
           style={pictureStyle}
           alt="post utilisateur"
         />
+          }
+          
+        </Link>
       )}
-      {text && <CardText>{text}</CardText>}
-      <div style={{width: "100%"}}>
+      {text && <Link to={`/${cardId} `} style={{ width: '100%' }}><CardText>{text}</CardText></Link>}
+      <div style={{ width: '100%' }}>
         <Likes
           likes={likes}
           dislikes={dislikes}
@@ -167,9 +192,13 @@ useEffect(() => {
           usersLiked={usersLiked}
           setInputComments={setInputComments}
         />
-      </div>  
-      <CommsWrapper >
-        <Comments inputComments={inputComments} setInputComments={setInputComments} postId={cardId}/>
+      </div>
+      <CommsWrapper>
+        <Comments
+          inputComments={inputComments}
+          setInputComments={setInputComments}
+          postId={cardId}
+        />
       </CommsWrapper>
     </CardWrapper>
   ) : (

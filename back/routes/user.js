@@ -7,9 +7,10 @@ const auth = require('../middleware/auth')
 const multer = require('../middleware/multer-config')
 
 
-router.post('/signup', email, password, userCtrl.signup)
-router.post('/login', userCtrl.login)
+router.post('/signup', multer, email, password, userCtrl.signup)
+router.post('/login', multer , userCtrl.login)
 router.get('/:userId', auth, userCtrl.getUser)
 router.put('/:userId', auth, multer, userCtrl.modifyUser)
+router.delete('/:userId', auth, multer, userCtrl.deleteUser)
 
 module.exports = router

@@ -1,4 +1,3 @@
-import '../styles/App.css'
 import styled from 'styled-components'
 import colors from '../utils/colors'
 import { StyledHomeButton } from '../utils/styles/button'
@@ -15,8 +14,6 @@ const HomeWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 2vh;
-  /* background-color: blue; */
 `
 const HomeCard = styled.div`
   display: flex;
@@ -25,15 +22,9 @@ const HomeCard = styled.div`
   justify-content: space-around;
   padding: 15px;
   border-radius: 90px;
-  margin-top: 25px;
-  & span {
-    color: white;
-    font-size: 12px;
-  }
 `
 const HomeCardTitle = styled.h1`
   margin: 0;
-  color: white;
   text-align: center;
   font-size: 25px;
   padding: 50px;
@@ -72,19 +63,17 @@ function App() {
   const [isTokenExpired, setTokenExpired] = useState(false)
   const { profile } = useContext(ProfileContext)
   const { logout, isAuthed } = useContext(authContext)
- 
+
   if (!profile) {
     localStorage.setItem('profile', JSON.stringify(defaultProfile))
   }
-  if (profile.token === 'TokenExpiredError' ) {
-    logout() &&
-    setSelectedLogin(true) &&
-    setTokenExpired(true)
+  if (profile.token === 'TokenExpiredError') {
+    logout() && setSelectedLogin(true) && setTokenExpired(true)
   }
-    
+
   return (
     <HomeWrapper>
-      {isAuthed && <Navigate to="/dashboard"/>}
+      {isAuthed && <Navigate to="/dashboard" />}
       {isSelectedSignUp === false ? (
         <HomeCard>
           <HomeCardTitle>

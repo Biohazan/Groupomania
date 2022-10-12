@@ -1,6 +1,6 @@
-import { useEffect, useState, useContext } from 'react'
+import { useEffect, useState, useContext, useReducer } from 'react'
 import { ProfileContext } from '../utils/context/Profile'
-import { useParams, Navigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import colors from '../utils/colors'
 import { size } from '../utils/breakpoint'
@@ -9,10 +9,14 @@ import Comments from '../components/Comment'
 import Likes from '../components/Likes'
 import TextareaAutosize from 'react-textarea-autosize'
 import fetchApi from '../utils/hooks/fetchApi'
+import { resizeFile } from '../utils/hooks/resizeFile'
 
 const CardContainer = styled.div`
   display: flex;
   justify-content: center;
+  align-items: center;
+  height: 72vh;
+  transition: all 300ms ease-in-out;
 `
 const CardWrapper = styled.div`
   margin: 5px;
@@ -34,8 +38,6 @@ const CardTitle = styled.div`
   font-size: 10px;
   align-self: flex-start;
   padding: 10px;
-  width: 97%;
-  color: white;
   text-shadow: 1px 1px ${colors.thirth};
   & .userCard {
     display: flex;
@@ -64,10 +66,12 @@ const CardInputWrapper = styled.div`
 `
 const PickerDiv = styled.div`
   position: absolute;
-  bottom: 48vh;
-  right: 2vw;
+  bottom: 6vh;
+  right: -2vw;
+  opacity: 0;
+  transition: all 2000ms ease-in-out;
   @media ${size.mobileM} {
-    bottom: 20vh;
+    bottom: 4vh;
     right: 4vw;
   }
 `
@@ -76,7 +80,6 @@ const TextAreaTitle = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 5px 10px;
-  color: white;
   & h2 {
     margin: 5px;
     margin-top: 5px;
@@ -86,7 +89,7 @@ const TextAreaTitle = styled.div`
 const PicturePreview = styled.div`
   position: absolute;
   bottom: 40px;
-  right: 0;
+  right: -12px;
   display: flex;
   justify-content: center;
   border: 1px solid ${colors.thirth};
@@ -94,7 +97,7 @@ const PicturePreview = styled.div`
   padding: 20px;
   background-color: ${colors.thirth};
   & img {
-    max-height: 200px;
+    width: 250px;
   }
   & i {
     position: absolute;
@@ -104,20 +107,23 @@ const PicturePreview = styled.div`
   }
 `
 const CardInput = styled.div`
+  display: flex;
+  flex-direction: column;
   padding: 5px;
   margin-bottom: 5px;
   text-align: center;
   background-color: transparent;
-  border-bottom-right-radius: 15px;
-  border-bottom-left-radius: 15px;
-  display: flex;
-  flex-direction: column;
   gap: 1px;
   @media ${size.mobileM} {
     flex-direction: row;
   }
   & #ButtonSendPost {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
     margin: 0px 5px;
+    padding: 5px;
     cursor: pointer;
     background-color: transparent;
     color: white;
@@ -134,13 +140,18 @@ const CardInput = styled.div`
   }
   & #postInput {
     margin: 0px 5px;
-    padding: 5px;
-    width: 90%;
+    padding: 10px;
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+    border-top-right-radius: 5px;
+    border-top-left-radius: 5px;
     @media ${size.mobileM} {
+      width: 90%;
       margin-right: 0px;
       padding: 15px;
-      border-bottom-left-radius: 15px;
-      border-top-left-radius: 15px;
+      border-bottom-right-radius: 0px;
+      border-top-right-radius: 0px;
+      border-bottom-left-radius: 5px;
     }
     &:hover {
       box-shadow: 0px 0px 5px white;
@@ -177,9 +188,13 @@ function OnePost() {
   const { postId } = useParams()
   const [inputPostValue, setPostValue] = useState('')
   const [fetchIsCorect, setFetchIsCorect] = useState(false)
-  const [fetchError, setFetchError] = useState([])
+  const [fetchError, setFetchError] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [isNotSameUser, setNotSameUser] = useState(false)
   const [inputComments, setInputComments] = useState(false)
+  const [avatar, setAvatar] = useState('')
+  const [author, setAuthor] = useState('')
+  const [isTranslate, setIsTranlate] = useState(false)
 
   // Date Manage
   let d = new Date()
@@ -187,28 +202,31 @@ function OnePost() {
   let hours = d.getHours() + ':' + d.getMinutes()
   let fullDate = date + ' ' + hours
 
+  // Function to GET one Post
   useEffect(() => {
-    function fetchPost() {
-      fetch(`http://localhost:2000/api/post/${postId}`, {
-        headers: {
-          Authorization: `Bearer ${profile.token}`,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.error && data.error.name === 'TokenExpiredError') {
-            setProfile({ token: 'TokenExpiredError' })
-          } else {
-            if (data.userId !== profile.userId) {
-              setNotSameUser(true)
-            }
-            setData(data)
-            setReload(false)
-            setPostValue(datas.text)
-          }
-        })
+    const option = {
+      method: 'GET',
     }
-    fetchPost()
+    fetchApi(`api/post/${postId}`, option, profile.token).then((res) => {
+      if (res.data.error && res.data.error.name === 'TokenExpiredError') {
+        setProfile({ token: 'TokenExpiredError' })
+      } else {
+        if (res.data.userId !== profile.userId) {
+          setNotSameUser(true)
+        }
+        if (res.status === 200) setData(res.data)
+        setReload(false)
+        setPostValue(datas.text)
+
+        // Function to get Author information
+        fetchApi(`api/auth/${res.data.userId}`, option, profile.token).then(
+          (res) => {
+            setAuthor(res.data.pseudo)
+            setAvatar(res.data.avatar)
+          }
+        )
+      }
+    })
   }, [
     profile.token,
     setProfile,
@@ -220,30 +238,47 @@ function OnePost() {
   ])
 
   // Const for Emojy
-  const [isEmoji, setIsEmoji] = useState(false)
+  const [isEmoji, setIsEmoji] = useReducer((state) => !state, false)
   const onEmojiClick = (event, emojiObject) => {
     setPostValue(inputPostValue + emojiObject.emoji)
   }
-  const toggleEmoji = () => {
-    !isEmoji ? setIsEmoji(true) : setIsEmoji(false)
+  const emojyStyle = {
+    color: isEmoji && 'green',
   }
-  // Const for Picture
-  const [selectedFile, setSelectedFile] = useState()
-  const [isFilePicked, setIsFilePicked] = useState(false)
-  const [pictureSrc, setPictureSrc] = useState()
 
-  //Function for added Picture
+  // Const for Picture
+  const [selectedFile, setSelectedFile] = useState('')
+  const [isFilePicked, setIsFilePicked] = useState(false)
+  const [pictureSrc, setPictureSrc] = useState('')
+  const [pictureLoad, setPictureLoad] = useState(false)
+
+  function closePreview() {
+    setPictureLoad(false)
+    setIsFilePicked(false)
+    setSelectedFile('')
+    setPictureSrc('')
+  }
+
+    //Function for added Picture
   let reader = new FileReader()
-  const changePicture = (event) => {
-    setSelectedFile(event.target.files[0])
-    setIsFilePicked(true)
-    let picture = event.target.files[0]
-    reader.onload = function (event) {
-      let picturetest = reader.result
-      setPictureSrc(picturetest.src)
-      setPictureSrc(picturetest)
+  async function changePicture(event) {
+    setPictureLoad(true)
+    const imageFile = event.target.files[0]
+    try {
+      const compressedFile = await resizeFile(imageFile)
+      setSelectedFile(compressedFile)
+      setIsFilePicked(true)
+      setPictureLoad(false)
+    } catch (error) {
+      console.log(error)
+      setPictureLoad(false)
     }
-    reader.readAsDataURL(picture)
+    reader.onload = function (event) {
+      let picture = reader.result
+      setPictureSrc(picture.src)
+      setPictureSrc(picture)
+    }
+    reader.readAsDataURL(imageFile)
   }
   // Pattern for Form
   let formToSend = {
@@ -254,110 +289,129 @@ function OnePost() {
   }
 
   // Function for post modification
-  async function modifyPost() {
-    console.log(inputPostValue)
+  function modifyPost() {
+    setIsLoading(true)
     const formData = new FormData()
     formData.append('post', JSON.stringify(formToSend))
     isFilePicked && formData.append('image', selectedFile)
-    if (formToSend.text === '' && !isFilePicked) return
+    if (formToSend.text === '' && !isFilePicked) {
+      setIsLoading(false)
+      return
+    }
     const option = {
       method: 'PUT',
-      data: formData
+      data: formData,
     }
-    fetchApi(`http://localhost:2000/api/post/${postId}`, option, profile.token)
-    .then((res) => {
+    fetchApi(`api/post/${postId}`, option, profile.token).then((res) => {
       if (res.status === 200) {
-        console.log(res)
         setFetchIsCorect(true)
         setReload(true)
         setIsFilePicked(false)
+        setFetchError(false)
+        setIsLoading(false)
       } else {
-        setFetchError(res.error)
-        console.log(res.error)
+        setFetchError(true)
+        setIsLoading(false)
+        console.log(res)
       }
-    }) 
-      
+    })
   }
 
   return (
-    <CardContainer>
+    <CardContainer
+      style={{
+        transform:
+          (isEmoji || isFilePicked || isTranslate) && !datas.pictureUrl && (window.innerWidth >= 530 ? 'translateY(10vh)' : 'translateY(10vh)'),
+        height: datas.pictureUrl && '90vh',
+        alignItems: (datas.pictureUrl && (window.innerWidth > 530)) && 'flex-start'
+      }}
+    >
       <CardWrapper>
-        {isNotSameUser && <Navigate to="/dashboard" replace />}
         <CardTitle>
           <div className="userCard">
-            <CardAvatar src={datas.avatarAuthor} alt="avatar" />
+            <CardAvatar src={avatar} alt="avatar" />
             <div className="authorDate">
-              {datas.author} <br />
+              {author} <br />
               {datas.date}
             </div>
           </div>
         </CardTitle>
-        {datas.imageUrl && (
-          <CardPicture
-            src={datas.imageUrl}
-            style={{
-              borderTopRightRadius: '15px',
-              borderTopLeftRadius: '15px',
-            }}
-            alt="post utilisateur"
-          />
+        {datas.pictureUrl && (
+          <CardPicture src={datas.pictureUrl} alt="post utilisateur" />
         )}
-        <CardInputWrapper>
-          {isEmoji && (
-            <PickerDiv>
-              <Picker onEmojiClick={onEmojiClick} disableSearchBar={true} />
-            </PickerDiv>
-          )}
-          <TextAreaTitle>
-            <h2>Que voulez vous racontez ?</h2>
-            {fetchIsCorect &&
-              setTimeout(() => {
-                setFetchIsCorect(false)
-              }, 3000) && <div> Post Modifié </div>}
-            <IconWrapper>
-              {isFilePicked && (
-                <PicturePreview>
-                  <img src={pictureSrc} alt="Import de l'utilisateur" />
-                  <i
-                    className="fa-regular fa-circle-xmark"
-                    onClick={() => setIsFilePicked(false)}
-                  />
-                </PicturePreview>
-              )}
-              <i
-                className="fa-solid fa-face-smile"
-                onClick={() => toggleEmoji()}
+        {isNotSameUser ? (
+          inputPostValue && (
+            <div style={{ padding: '25px', textAlign: 'center' }}>
+              {inputPostValue}
+            </div>
+          )
+        ) : (
+          <CardInputWrapper>
+            <TextAreaTitle>
+              <h2>Que voulez vous racontez ?</h2>
+              {fetchIsCorect &&
+                setTimeout(() => {
+                  setFetchIsCorect(false)
+                }, 3000) && <div> Post Modifié </div>}
+              {fetchError && <div> Une erreur c'est produite </div>}
+              {isLoading && <div> Envoi en cours... </div>}
+              {pictureLoad && <div style={{marginRight: '10px'}}> Chargement de l'image...</div>}
+              <IconWrapper>
+                {isFilePicked && (
+                  <PicturePreview>
+                    <img src={pictureSrc} alt="Import de l'utilisateur" />
+                    <i
+                      className="fa-regular fa-circle-xmark"
+                      onClick={closePreview}
+                    />
+                  </PicturePreview>
+                )}
+                {isEmoji && (
+                  <PickerDiv style={{ opacity: '1' }}>
+                    <Picker
+                      onEmojiClick={onEmojiClick}
+                      disableSearchBar={true}
+                    />
+                  </PickerDiv>
+                )}
+                <i
+                  className="fa-solid fa-face-smile"
+                  style={emojyStyle}
+                  onClick={setIsEmoji}
+                />
+                <label
+                  htmlFor="fileUpload"
+                  className="fa-solid fa-link"
+                  id="fileUploadIcon"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="fileUpload"
+                  onChange={changePicture}
+                />
+              </IconWrapper>
+            </TextAreaTitle>
+            <CardInput>
+              <TextareaAutosize
+                className="textAreaStyle"
+                name="postInput"
+                id="postInput"
+                value={inputPostValue}
+                onChange={(e) => setPostValue(e.target.value)}
               />
-              <label
-                htmlFor="fileUpload"
-                className="fa-solid fa-link"
-                id="fileUploadIcon"
-              />
-              <input
-                type="file"
-                accept="image/*"
-                id="fileUpload"
-                onChange={changePicture}
-              />
-            </IconWrapper>
-          </TextAreaTitle>
-          <CardInput>
-            <TextareaAutosize
-            className='textAreaStyle'
-              name="postInput"
-              id="postInput"
-              value={inputPostValue}
-              onChange={(e) => setPostValue(e.target.value)}
-            />
-            <button
-              className="fa-regular fa-paper-plane"
-              id="ButtonSendPost"
-              onClick={modifyPost}
-            />
-          </CardInput>
-        </CardInputWrapper>
+              <button
+                className="fa-regular fa-paper-plane"
+                id="ButtonSendPost"
+                onClick={modifyPost}
+              >
+                <span>Envoyer</span>
+              </button>
+            </CardInput>
+          </CardInputWrapper>
+        )}
         {
-          <div style={{ width: '100%', padding:'5px' }}>
+          <div style={{ width: '100%', padding: '5px' }}>
             <Likes
               likes={datas.likes}
               dislikes={datas.dislikes}
@@ -367,10 +421,15 @@ function OnePost() {
               usersLiked={datas.usersLiked}
               setInputComments={setInputComments}
             />
-         <div style={{ margin:'5px' }}>
-        <Comments inputComments={inputComments} setInputComments={setInputComments} postId={postId} />
-        </div>
-        </div>
+            <div style={{ margin: '5px' }}>
+              <Comments
+                inputComments={inputComments}
+                setInputComments={setInputComments}
+                postId={postId}
+                setIsTranlate={setIsTranlate}
+              />
+            </div>
+          </div>
         }
       </CardWrapper>
     </CardContainer>

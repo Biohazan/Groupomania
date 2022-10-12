@@ -9,11 +9,12 @@ const schemaPassword = new passwordValidator()
     .has().not().spaces(0, "Le mot de passe ne doit pas avoir d'espace") 
 
 module.exports =  (req, res, next) =>{
-    if (schemaPassword.validate(req.body.password)){
+    const userObject = JSON.parse(req.body.signup)
+    if (schemaPassword.validate(userObject.password)){
         next()
     } else {
         let errorPasswordArray = []
-        schemaPassword.validate(req.body.password, {details : true})
+        schemaPassword.validate(userObject.password, {details : true})
         .forEach(element => {
             errorPasswordArray.push(element.message)
         })

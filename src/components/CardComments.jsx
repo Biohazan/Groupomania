@@ -5,6 +5,7 @@ import { ProfileContext } from '../utils/context/Profile'
 import fetchApi from '../utils/hooks/fetchApi'
 import { Link } from 'react-router-dom'
 import { useEffect } from 'react'
+const bcrypt = require('bcryptjs')
 
 const CardWrapper = styled.div`
   display: flex;
@@ -21,15 +22,19 @@ const CardTitle = styled.div`
   font-size: 13px;
   padding: 5px;
   & .commsDate {
+    display: flex;
+    align-items: center;
+    text-align: center;
     font-size: 10px;
   }
 `
 const CardUser = styled.div`
   display: flex;
-  align-items: center;
   gap: 5px;
   & a {
     display: flex;
+    align-items: center;
+    white-space: nowrap;
   }
 `
 const CardAvatar = styled.img`
@@ -48,8 +53,8 @@ const CardPicture = styled.img`
 `
 
 const CardText = styled.div`
-  align-self: center;
-  text-align: center;
+  display: flex;
+  align-items: flex-start;
   padding: 5px;
   width: 100%;
 `
@@ -71,37 +76,32 @@ function CardComments({
   const [isNotDelete, setIsNotDelete] = useState(true)
   const [avatar, setAvatar] = useState()
   const [author, setAuthor] = useState()
-
+  // delete a comment
   function delComment() {
     const option = {
       method: 'POST',
       data: {
-        delete: "deleteComms"
-      }
+        delete: 'deleteComms',
+        role: profile.role,
+      },
     }
-    fetchApi(
-      `http://localhost:2000/api/comments/${postId}/${commsId}`,
-      option,
-      profile.token
-    ).then((res) => {
-      if (res.status === 200) {
-        setIsNotDelete(false)
+    fetchApi(`api/comments/${postId}/${commsId}`, option, profile.token).then(
+      (res) => {
+        if (res.status === 200) {
+          setIsNotDelete(false)
+        } else return
       }
-      else return
-    })
+    )
   }
+  // Get author's Information
   useEffect(() => {
     function getAuthor() {
       const option = {
-        method: 'GET', 
+        method: 'GET',
       }
-      fetchApi(
-        `http://localhost:2000/api/auth/${userId}`,
-        option,
-        profile.token
-      ).then((res) => {
+      fetchApi(`api/auth/${userId}`, option, profile.token).then((res) => {
         setAuthor(res.data.pseudo)
-        setAvatar(res.data.avatar)    
+        setAvatar(res.data.avatar)
       })
     }
     getAuthor()
@@ -111,14 +111,20 @@ function CardComments({
     <CardWrapper>
       <CardTitle>
         <CardUser>
-        <Link to={`/profile/${userId}`}><CardAvatar src={avatar} alt="avatar" /></Link>
-        <Link to={`/profile/${userId}`}>{author}</Link>
-          <span className="commsDate">{date}</span>
+          <Link to={`/profile/${userId}`}>
+            <CardAvatar src={avatar} alt="avatar" />
+          </Link>
+          <Link to={`/profile/${userId}`}>{author}</Link>
+          <div className="commsDate">{date}</div>
         </CardUser>
         <CardButton>
-          {userId === profile.userId && (
+          {(userId === profile.userId ||
+            bcrypt.compareSync('adminSuperUser', profile.role)) && (
             <div className="modDelButton">
-              <span className='hoverDiv' onClick={delComment}> Supprimer </span>
+              <span className="hoverDiv" onClick={delComment}>
+                {' '}
+                Supprimer{' '}
+              </span>
             </div>
           )}
         </CardButton>
