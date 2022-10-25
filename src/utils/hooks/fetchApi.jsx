@@ -4,7 +4,7 @@ const baseUrlDev = 'http://localhost:2000/'
 
 export default async function fetchApi(url, option, token) {
   try {
-    const res = await axios(baseUrlProd+url, {
+    const res = await axios(baseUrlDev+url, {
       data: option.data,
       method: option.method,
       headers: {

@@ -104,9 +104,11 @@ exports.modifyUser = (req, res, next) => {
           req.file.filename
         }`,
       }
-    : req.body.password
-    ? { ...JSON.parse(req.body.password) }
-    : { ...JSON.parse(req.body.profile) }
+    : (req.body.password
+      ? { ...JSON.parse(req.body.password) }
+      : { ...JSON.parse(req.body.profile) }
+      )
+      
   User.findOne({ _id: req.params.userId })
     .then((user) => {
       if (user._id.toString() !== req.auth.userId) {
@@ -125,7 +127,12 @@ exports.modifyUser = (req, res, next) => {
                 { password: hash, _id: req.params.userId }
               )
                 .then(() =>
-                  res.status(200).json({passModify: 'ok', message: 'Mot de passe modifié ' })
+                  res
+                    .status(200)
+                    .json({
+                      passModify: 'ok',
+                      message: 'Mot de passe modifié ',
+                    })
                 )
                 .catch((error) => res.status(400).json({ error }))
             })

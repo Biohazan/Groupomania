@@ -9,7 +9,6 @@ export const resizeFile = (file, isprofile) =>
       pictureHeight = '150'
   }
   let pictureCompress = 80
-  console.log(file.size)
   if(file.size <= 20000)
   pictureCompress = 100
 
@@ -17,7 +16,7 @@ export const resizeFile = (file, isprofile) =>
     file,
     pictureWidth,
     pictureHeight,
-    "JPEG",
+    "jpg",
     pictureCompress,
     0,
     (uri) => {
@@ -25,5 +24,6 @@ export const resizeFile = (file, isprofile) =>
     },
     "file"
   );
+  
 });
 

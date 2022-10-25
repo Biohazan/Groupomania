@@ -256,7 +256,7 @@ function Profile() {
     new: newPasswordInput,
   }
 
-  // Const for set picture
+  // Function for set picture
   let compressedFile
   async function changePicture(event) {
     let reader = new FileReader()
@@ -286,7 +286,7 @@ function Profile() {
     const option = {
       method: 'GET',
     }
-    fetchApi(`api/auth/${userId}`, option, profile.token).then((res) => {
+    fetchApi(`api/user/${userId}`, option, profile.token).then((res) => {
       setPseudoInput(res.data.pseudo)
       setDescribeInput(res.data.describe)
       setavatarInput(res.data.avatar)
@@ -315,8 +315,7 @@ function Profile() {
       method: 'PUT',
       data: formProfile,
     }
-    fetchApi(`api/auth/${userId}`, option, profile.token).then((res) => {
-      console.log(res)
+    fetchApi(`api/user/${userId}`, option, profile.token).then((res) => {
       if (res.status === 200) {
         if (res.data.passModify === 'ok') {
           setPasswordIsModify(true)
@@ -348,7 +347,7 @@ function Profile() {
       method: 'DELETE',
       data: formData,
     }
-    fetchApi(`api/auth/${userId}`, option, profile.token).then((res) => {
+    fetchApi(`api/user/${userId}`, option, profile.token).then((res) => {
       if (res.status === 200) logout()
     })
   }

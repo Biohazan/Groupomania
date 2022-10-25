@@ -55,6 +55,7 @@ function LoginForm({ setSelectedSignUp }) {
   const [inputPassValue, setPassValue] = useState('')
   const { setProfile } = useContext(ProfileContext)
   const { login, isAuthed } = useContext(authContext)
+  const [fetchError, setFetchError] = useState([])
 
   const loginForm = {
     email: inputMailValue,
@@ -69,7 +70,7 @@ function LoginForm({ setSelectedSignUp }) {
       method: 'POST',
       data: formData,
     }
-    fetchApi(`api/auth/login`, option).then((res) => {
+    fetchApi(`api/user/login`, option).then((res) => {
       if (res.status === 200) {
         login()
         setProfile({
@@ -80,7 +81,8 @@ function LoginForm({ setSelectedSignUp }) {
           describe: res.data.describe,
           role: res.data.role,
         })
-      } else console.log(res)
+      } else if (res.response.status === 401)
+      setFetchError(res.response.data.message)
     })
   }
 
@@ -99,7 +101,7 @@ function LoginForm({ setSelectedSignUp }) {
         <label htmlFor="password">Mot de passe: </label>
         <div>
           <input
-            type='password'
+            type="password"
             id="password"
             value={inputPassValue}
             onChange={(e) => setPassValue(e.target.value)}
@@ -111,6 +113,11 @@ function LoginForm({ setSelectedSignUp }) {
           />
         </div>
       </PasswordWrapper>
+      {fetchError && Array.isArray(fetchError) ? (
+        fetchError.map((err) => <span key={err}>{err}</span>)
+      ) : (
+        <span>{fetchError}</span>
+      )}
       <ButtonWrapper>
         <StyledHomeButton type="submit" id="enter" style={ButtonEnter}>
           Entrer !

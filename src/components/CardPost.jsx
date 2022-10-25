@@ -129,7 +129,7 @@ function CardPost({
         method: 'GET',
       }
       fetchApi(
-        `api/auth/${userId}`,
+        `api/user/${userId}`,
         option,
         profile.token
       ).then((res) => {

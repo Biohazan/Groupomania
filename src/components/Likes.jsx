@@ -91,7 +91,6 @@ function Likes({
       data: { like: isLike },
     }
     fetchApi(`api/post/${cardId}/like`, option, profile.token).then((res) => {
-      console.log(res)
       if (res.status === 200) {
         setReload(true)
         oneOnce.current = false

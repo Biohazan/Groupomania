@@ -57,7 +57,6 @@ function Dashboard() {
     setTimeout(() => {
       heightDasboard.current = windowHeigth - formHeight - headerHeight - 5
     }, PostForm)
-    
   }, [windowHeigth, formHeight, headerHeight])
 
   // Function to GET all Post

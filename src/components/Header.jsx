@@ -104,7 +104,7 @@ function Header() {
         <ProfileWrapper>
           <ProfileAuthor>
             <Link to={`/profile/${profile.userId}`} data-title="Profile">
-              <img src={profile.avatar} className="hoverDiv" alt="test" />
+              <img src={profile.avatar} className="hoverDiv" alt="avatar" />
               {window.innerWidth >= 530 ? (
                 <div className="hoverDiv">{profile.pseudo}</div>
               ) : null}

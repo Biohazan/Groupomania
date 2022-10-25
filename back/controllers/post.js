@@ -98,20 +98,16 @@ exports.getAllPost = (req, res, next) => {
 
 // Route like post
 exports.likepost = (req, res, next) => {
+
   function postUpdate(postObject, postId) {
-      console.log(postObject)
-      Post.updateOne(
-        { _id: postId },
-        {...postObject._doc, _id: postId }
-      )
-        .then(() => res.status(200).json({ message: 'Like enregistré' }))
-        .catch((error) => res.status(400).json({ error }))
-    } 
-  
+    Post.updateOne({ _id: postId }, { ...postObject._doc, _id: postId })
+      .then(() => res.status(200).json({ message: 'Like enregistré' }))
+      .catch((error) => res.status(400).json({ error }))
+  }
+
   Post.findOne({ _id: req.params.id })
     .then((post) => {
-      const postObject = {...post}
-      console.log(req.body.like)
+      const postObject = { ...post }
       if (
         !post.usersLiked.find((user) => user === req.auth.userId) &&
         !post.usersDisliked.find((user) => user === req.auth.userId)
@@ -120,18 +116,17 @@ exports.likepost = (req, res, next) => {
           case 1:
             postObject._doc.usersLiked.push(req.auth.userId)
             postObject._doc.likes++
-            postUpdate({...postObject}, req.params.id)
+            postUpdate({ ...postObject }, req.params.id)
             break
           case -1:
             postObject._doc.usersDisliked.push(req.auth.userId)
             postObject._doc.dislikes++
-            postUpdate({...postObject}, req.params.id)
+            postUpdate({ ...postObject }, req.params.id)
             break
           case 0:
             res.status(400).json({ message: 'Action non autorisé' })
             break
           default:
-            console.log('error5')
             break
         }
       } else if (
@@ -141,7 +136,7 @@ exports.likepost = (req, res, next) => {
         let index = postObject._doc.usersLiked.indexOf(req.auth.userId)
         postObject._doc.usersLiked.splice(index, 1)
         postObject._doc.likes--
-        postUpdate({...postObject}, req.params.id)
+        postUpdate({ ...postObject }, req.params.id)
       } else if (
         post.usersDisliked.find((user) => user === req.auth.userId) &&
         req.body.like === 0
@@ -149,7 +144,7 @@ exports.likepost = (req, res, next) => {
         let index = postObject._doc.usersDisliked.indexOf(req.auth.userId)
         postObject._doc.usersDisliked.splice(index, 1)
         postObject._doc.dislikes--
-        postUpdate({...postObject}, req.params.id)
+        postUpdate({ ...postObject }, req.params.id)
       } else {
         res.status(400).json({ message: 'Action non autorisé' })
       }

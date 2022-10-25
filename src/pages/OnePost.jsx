@@ -219,7 +219,7 @@ function OnePost() {
         setPostValue(datas.text)
 
         // Function to get Author information
-        fetchApi(`api/auth/${res.data.userId}`, option, profile.token).then(
+        fetchApi(`api/user/${res.data.userId}`, option, profile.token).then(
           (res) => {
             setAuthor(res.data.pseudo)
             setAvatar(res.data.avatar)

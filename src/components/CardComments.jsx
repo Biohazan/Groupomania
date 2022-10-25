@@ -99,7 +99,7 @@ function CardComments({
       const option = {
         method: 'GET',
       }
-      fetchApi(`api/auth/${userId}`, option, profile.token).then((res) => {
+      fetchApi(`api/user/${userId}`, option, profile.token).then((res) => {
         setAuthor(res.data.pseudo)
         setAvatar(res.data.avatar)
       })

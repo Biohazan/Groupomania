@@ -74,7 +74,7 @@ function SignUpForm({ setSelectedSignUp, setSelectedLogin }) {
       method: 'POST',
       data: formData,
     }
-    fetchApi(`api/auth/signup`, option).then((res) => {
+    fetchApi(`api/user/signup`, option).then((res) => {
       if (res.status === 201) {
         login()
         setProfile({

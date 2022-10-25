@@ -35,7 +35,7 @@ app.use((req, res, next) => {
 
 app.use('/api/comments', commentsRoutes)
 app.use('/api/post', postRoutes)
-app.use('/api/auth', userRoutes)
+app.use('/api/user', userRoutes)
 app.use('/images', express.static('./images'))
 
 module.exports = app

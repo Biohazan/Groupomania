@@ -79,7 +79,7 @@ function App() {
           <HomeCardTitle>
             Bienvenue sur <br />
             La <br />
-            Platforme pour
+            Plateforme pour
             <br /> Vous !
           </HomeCardTitle>
           {!isSelectedLogin && (

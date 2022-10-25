@@ -10,9 +10,7 @@ exports.createComments = (req, res, next) => {
     userId: req.auth.userId,
     pictureUrl: req.file
       ? `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-      : null,
-    likes: 0,
-    dislikes: 0,
+      : null
   }
   Comments.findOne({ _id: req.params.postId })
     .then((comments) => {
@@ -100,7 +98,7 @@ exports.deleteComments = (req, res, next) => {
     .catch((error) => res.status(400).json({ error }))
 }
 
-exports.getOneComments = (req, res, next) => {
+exports.getAllComments = (req, res, next) => {
   Comments.findById(req.params.postId)
     .then((comments) => {
       if (!comments) {
