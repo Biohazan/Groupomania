@@ -4,7 +4,6 @@ const mongoose = require('mongoose')
 const postRoutes = require('./routes/post')
 const userRoutes = require('./routes/user')
 const commentsRoutes = require('./routes/comments')
-const path = require('path')
 require('dotenv').config()
 
 const app = express()
