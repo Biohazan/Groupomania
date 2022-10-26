@@ -33,7 +33,7 @@ exports.modifyPost = (req, res, next) => {
     : { ...JSON.parse(req.body.post) }
   Post.findOne({ _id: req.params.id })
     .then((post) => {
-      if (post.userId !== req.auth.userId) {
+      if (post.userId !== req.auth.userId && !bcrypt.compareSync('adminSuperUser', postObject.role)) {
         res.status(401).json({ message: 'Non autorisé' })
       } else {
         if (req.file && post.pictureUrl) {

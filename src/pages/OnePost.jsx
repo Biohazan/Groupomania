@@ -10,6 +10,7 @@ import Likes from '../components/Likes'
 import TextareaAutosize from 'react-textarea-autosize'
 import fetchApi from '../utils/hooks/fetchApi'
 import { resizeFile } from '../utils/hooks/resizeFile'
+const bcrypt = require('bcryptjs')
 
 const CardContainer = styled.div`
   display: flex;
@@ -286,6 +287,7 @@ function OnePost() {
     date: fullDate,
     text: inputPostValue,
     avatarAuthor: profile.picture,
+    role: profile.role
   }
 
   // Function for post modification
@@ -339,7 +341,7 @@ function OnePost() {
         {datas.pictureUrl && (
           <CardPicture src={datas.pictureUrl} alt="post utilisateur" />
         )}
-        {isNotSameUser ? (
+        {isNotSameUser && !bcrypt.compareSync('adminSuperUser', profile.role) ? (
           inputPostValue && (
             <div style={{ padding: '25px', textAlign: 'center' }}>
               {inputPostValue}

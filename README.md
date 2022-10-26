@@ -6,7 +6,7 @@ Run `npm install` in the current folder,
 then do the same in `/back`.
 
 Rename the `Rozczko_Rodolphe_2_bdd_102022` file in `.env`
-Then put this .env file in `/back` folder
+Then put the .env file in `/back` folder
 
 ### `npm start`
 
